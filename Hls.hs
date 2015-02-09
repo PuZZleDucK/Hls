@@ -1,6 +1,4 @@
 
-
-
 module Hls where
 import System.Environment
 import System.Directory
@@ -38,19 +36,10 @@ main = do
   runTermOutput term (termText (" Sample header: "++(show (formatList sampleOutput 32 True))++"\n"))
   runTermOutput term (termText (" Sample no header thin: "++(show (formatList sampleOutput 5 False))++"\n"))
 
-
 --  runTermOutput term (termText (" Output: \n"++unlines (formatList (dropMaybe fileLists) width showHeader)))
 
-  runTermOutput term ((fromMaybe (\_ -> termText "") up) 7)
-  runTermOutput term (termText ("#\n"))
-  runTermOutput term (termText ("#\n"))
-  runTermOutput term (termText ("#\n"))
-  runTermOutput term (termText ("#\n"))
-  runTermOutput term (termText ("#\n"))
-  runTermOutput term (termText ("#\n"))
-  runTermOutput term (termText ("\n"))
-  runTermOutput term (termText ("\n"))
-
+--  runTermOutput term ((fromMaybe (\_ -> termText "") up) 7)
+--  runTermOutput term (termText ("#\n"))
   return ()
 
 sampleOutput :: [(FilePath,[String])]
