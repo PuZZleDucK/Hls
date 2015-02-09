@@ -33,7 +33,7 @@ main = do
   runTermOutput term (termText (" Header row(s): "++(show showHeader)++"\n"))
 --  runTermOutput term (termText (" Files: "++(((liftM show fileLists))++"\n"))
   runTermOutput term (termText (" Terminal size: "++sizeDisplay++"\n"))
-  runTermOutput term (termText (" Sample header: "++(show (formatList sampleOutput 32 True))++"\n"))
+  runTermOutput term (termText (" Sample header: "++(show (formatList sampleOutput 82 True))++"\n"))
   runTermOutput term (termText (" Sample no header thin: "++(show (formatList sampleOutput 5 False))++"\n"))
 
 --  runTermOutput term (termText (" Output: \n"++unlines (formatList (dropMaybe fileLists) width showHeader)))
@@ -66,9 +66,10 @@ formatListing :: [String] -> Int -> Int -> [String]
 formatListing [] entryMaxWidth width = []
 formatListing listing entryMaxWidth width
   | entriesPerRow < 2 = listing
-  | (length listing) < entriesPerRow = (foldr (++) "!" listing):[]
-  | otherwise = foldr (++) "!" (take entriesPerRow listing) : (formatListing (drop entriesPerRow listing) entryMaxWidth width)
+  | (length listing) < entriesPerRow = (foldr ((++)) "" (paddedEntries)):[]
+  | otherwise = foldr (++) "" (take entriesPerRow paddedEntries) : (formatListing (drop entriesPerRow listing) entryMaxWidth width)
     where entriesPerRow = width `div` entryMaxWidth
+          paddedEntries = map ((flip padDisplayString) entryMaxWidth) listing
 
 -- :
 
@@ -83,6 +84,6 @@ widestFilename list = max ((length . head) list) (widestFilename (tail list))
 
 padDisplayString :: String -> Int -> String
 padDisplayString input targetLength | (length input) >= targetLength = input
-                                    | otherwise = input ++ take (targetLength-(length input)) (repeat ' ')
+                                    | otherwise = input ++ take (targetLength-(length input)) (repeat '_')
 
 
