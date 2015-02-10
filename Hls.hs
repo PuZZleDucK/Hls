@@ -79,9 +79,12 @@ calculateRowCount list rows displayWidth = if calculateLength list < displayWidt
   then rows
   else calculateRowCount list (rows+1) displayWidth
 
+columnBufferWidth :: Int
+columnBufferWidth = 2
+
 calculateLength :: [String] -> Int
 calculateLength [] = 0
-calculateLength (x:xs) = (length x)+(calculateLength xs)
+calculateLength (x:xs) = ((length x)+columnBufferWidth)+(calculateLength xs)
 
 --                                   Width   showHeader
 formatList :: [(FilePath, [String])] -> Int -> Bool -> [String]
@@ -120,86 +123,7 @@ padDisplayString input targetLength | (length input) >= targetLength = input
 {-
 --FROM GNU/LINUX LS
 
-enum filetype
-    unknown,
-    fifo,
-    chardev,
-    directory,
-    blockdev,
-    normal,
-    symbolic_link,
-    sock,
-    whiteout,
-    arg_directory
-
-struct fileinfo
-    char *name;/* The file name.  */
-    char *linkname;/* For symbolic link, name of the file linked to, otherwise zero.  */
-    struct stat stat;
-    enum filetype filetype;
-    mode_t linkmode; /* For symbolic link and long listing, st_mode of file linked to, otherwise zero.  */
-    char *scontext;/* security context.  */
-    bool stat_ok;
-    bool linkok;/* For symbolic link and color printing, true if linked-to file exists, otherwise false.  */
-    enum acl_type acl_type;/* For long listings, true if the file has an access control list, or a security context.  */
-    bool has_capability;/* For color listings, true if a regular file has capability info.  */
-
-enum format
-    long_format,                /* -l and other options that imply -l */
-    one_per_line,               /* -1 */
-    many_per_line,              /* -C */
-    horizontal,                 /* -x */
-    with_commas                 /* -m */
-
-enum time_type
-    time_mtime,                 /* default */
-    time_ctime,                 /* -c */
-    time_atime,                 /* -u */
-    time_numtypes               /* the number of elements of this enum */
-
-enum sort_type
-    sort_none = -1,             /* -U */
-    sort_name,                  /* default */
-    sort_extension,             /* -X */
-    sort_size,                  /* -S */
-    sort_version,               /* -v */
-    sort_time,                  /* -t */
-    sort_numtypes               /* the number of elements of this enum */
-
-   true means the opposite order in each case.  -r  */
-
-
-/* True means to display owner information.  -g turns this off.  */
-static bool print_owner = true;/* True means to display author information.  */
-static bool print_author;
-/* True means to display group information.  -G and -o turn this off.  */
-/* True means print the user and group id's as numbers rather than as names.  -n  */
-static bool numeric_ids;
-static bool print_block_size;/* True means mention the size in blocks of each file.  -s  */
-/* -h Human-readable options for output, when printing block counts.  */
-/* 'none' means don't mention the type of files.
-   'slash' means mention directories only, with a '/'.
-   'file_type' means mention file types.
-   'classify' means mention file types and mark executables.
-   Controlled by -F, -p, and --indicator-style.  */
-
-enum indicator_style
-    none,       /*     --indicator-style=none */
-    slash,      /* -p, --indicator-style=slash */
-    file_type,  /*     --indicator-style=file-type */
-    classify    /* -F, --indicator-style=classify */
-
-/* True means use colors to mark types.  Also define the different colors as well as the stuff for the LS_COLORS environment variable. The LS_COLORS variable is now in a termcap-like format.  */
-
-  /* Ignore '.', '..', and files specified by --ignore.  
-
-/* A linked list of shell-style globbing patterns.  If a non-argument file name matches any of these patterns, it is ignored. Controlled by -I.  Multiple -I options accumulate. The -B option adds '*~' and '.*~' to this list.  */
-
-/* The line length to use for breaking lines in many-per-line format. Can be set with -w.  */
-
-
 static struct option const long_options[] =
-{
   {"all", no_argument, NULL, 'a'},
   {"escape", no_argument, NULL, 'b'},
   {"directory", no_argument, NULL, 'd'},
@@ -241,33 +165,118 @@ static struct option const long_options[] =
   {"context", no_argument, 0, 'Z'},
   {"author", no_argument, NULL, AUTHOR_OPTION},
 
-static char const *const format_args[] =
-  "verbose", "long", "commas", "horizontal", "across",
-  "vertical", "single-column", NULL
 
-static enum format const format_types[] =
-  long_format, long_format, with_commas, horizontal, hor
-izontal,
-  many_per_line, one_per_line
 
-static char const *const sort_args[] =
-  "none", "time", "size", "extension", "version", NULL
 
-static char const *const time_args[] =
-  "atime", "access", "use", "ctime", "status", NULL
+struct fileinfo
+    char *name;/* The file name.  */
+    char *linkname;/* For symbolic link, name of the file linked to, otherwise zero.  */
+    struct stat stat;
+    enum filetype filetype;
+    mode_t linkmode; /* For symbolic link and long listing, st_mode of file linked to, otherwise zero.  */
+    char *scontext;/* security context.  */
+    bool stat_ok;
+    bool linkok;/* For symbolic link and color printing, true if linked-to file exists, otherwise false.  */
+    enum acl_type acl_type;/* For long listings, true if the file has an access control list, or a security context.  */
+    bool has_capability;/* For color listings, true if a regular file has capability info.  */
 
-static char const *const color_args[] =
-  /* force and none are for compatibility with another color-ls version */
-  "always", "yes", "force",
-  "never", "no", "none",
-  "auto", "tty", "if-tty", NULL
+
+
+
+
+/* True means to display owner information.  -g turns this off.  */
+static bool print_owner = true;/* True means to display author information.  */
+static bool print_author;
+/* True means to display group information.  -G and -o turn this off.  */
+/* True means print the user and group id's as numbers rather than as names.  -n  */
+static bool numeric_ids;
+static bool print_block_size;/* True means mention the size in blocks of each file.  -s  */
+/* 
+   
+   
+   
+   
+
+/* True means use colors to mark types.  Also define the different colors as well as the stuff for the LS_COLORS environment variable. The LS_COLORS variable is now in a termcap-like format.  */
+echo "$LS_COLORS"
+rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.axa=00;36:*.oga=00;36:*.spx=00;36:*.xspf=00;36:
+
+/* A linked list of shell-style globbing patterns.  If a non-argument file name matches any of these patterns, it is ignored. Controlled by -I.  Multiple -I options accumulate. The -B option adds '*~' and '.*~' to this list.  */
+
 
 /* The minimum width of a column is 3: 1 character for the name and 2 for the separating white space.  */
 #define MIN_COLUMN_WIDTH        3
 
 
+:: COMMAND FLAGS ::
+-w   line length to use for breaking lines in many-per-line format. Can be set with
+--ignore   Ignore '.', '..', and files
+--indicator-style   Controlled by -F, -p, and --indicator-style.  */
+    none,       /*     --indicator-style=none */'none' means don't mention the type of files.
+    slash,      /* -p, --indicator-style=slash */'slash' means mention directories only, with a '/'.
+    file_type,  /*     --indicator-style=file-type */'file_type' means mention file types.
+    classify    /* -F, --indicator-style=classify */'classify' means mention file types and mark executables.
+/* -h Human-readable options for output, when printing block counts.  */
+enum sort_type
+    sort_none = -1,             /* -U */
+    sort_name,                  /* default */
+    sort_extension,             /* -X */
+    sort_size,                  /* -S */
+    sort_version,               /* -v */
+    sort_time,                  /* -t */
+   true means the opposite order in each case.  -r  */
+enum time_type
+    time_mtime,                 /* default */
+    time_ctime,                 /* -c */
+    time_atime,                 /* -u */
+enum format
+    long_format,                /* -l and other options that imply -l */
+    one_per_line,               /* -1 */
+    many_per_line,              /* -C */
+    horizontal,                 /* -x */
+    with_commas                 /* -m */
+
 
 -}
+
+
+data LinkModes = NoLink | HardLink | SoftLink
+
+data IndicatorStyle = NoIndicator
+                    | SlashIndicator
+                    | TypeIndicator
+                    | ClassifyIndicator
+
+colorArguments = ["always", "yes", "force", "never", "no", "none", "auto", "tty", "if-tty"]
+
+timeArguments = ["atime", "access", "use", "ctime", "status"]
+data TimeTypes = MTime | CTime | ATime
+
+sortArguments = ["none", "time", "size", "extension", "version"]
+data SortType = NoSort
+              | NameSort
+              | ExtensionSort
+              | SizeSort
+              | VersionSort
+              | TimeSort
+
+formatArguments = ["verbose", "long", "commas", "horizontal", "across", "vertical", "single-column"]
+data FormatTypes = LongFormat
+                 | WithCommasFormat
+                 | HorizontalFormat
+                 | ManyPerLineFormat
+                 | OnePerLine
+
+data FileType = UnknownType
+              | FifoType
+              | CharDevType
+              | DirectoryType
+              | BlockDevType
+              | NormalType
+              | SymbolicLinkType
+              | SockType
+              | WhiteoutType
+              | ArgDirectoryType
 
 
 
