@@ -197,10 +197,13 @@ data FileType = UnknownType
               | ArgDirectoryType
 data LinkType = NoLink | HardLink | SoftLink
 
-data CommandArgs = CommandArgs { flag :: String
-                               , name :: String
+data CommandArgs = CommandArgs { commandFlag :: String
+                               , commandName :: String
+                               , commandDescription :: String
 
 }
+
+commandArgs = map (((uncurry.uncurry)) CommandArgs) [ (("g", "Suppress Owner"), "c") ]
 
 {-
 --FROM GNU/LINUX LS
