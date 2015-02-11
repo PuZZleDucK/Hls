@@ -203,13 +203,16 @@ data CommandArgs = CommandArgs { commandFlag :: String
 
 }
 
-commandArgs = map (((uncurry.uncurry)) CommandArgs) [ (("g", "Suppress Owner"), "c") ]
+commandArgs = map (((uncurry.uncurry)) CommandArgs) [ (("g", "Suppress Owner"), "c")
+                                                    , (("",""),"")
+                                                    , (("",""),"")
+                                                    , (("",""),"")
+                                                    , (("",""),"")
+                                                    , (("",""),"")
+]
 
 {-
 --FROM GNU/LINUX LS
-/* True means to display owner information.  -g turns this off.  */
-static bool print_owner = true;/* True means to display author information.  */
-static bool print_author;
 /* True means to display group information.  -G and -o turn this off.  */
 /* True means print the user and group id's as numbers rather than as names.  -n  */
 static bool numeric_ids;
