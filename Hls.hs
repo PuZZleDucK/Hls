@@ -119,71 +119,87 @@ padDisplayString input targetLength | (length input) >= targetLength = input
 
 
 
+data LsOptions = LsOptions { listAll :: Bool
+                           , listAlmostAll :: Bool
+                           , listBackups :: Bool
+                           , listRecursive :: Bool
+                           , showInode :: Bool
+                           , showSize :: Bool
+                           , showClassifier :: Bool
+                           , showIndicatorStyle :: IndicatorStyle
+                           , showControlChars :: Bool
+                           , showTime :: Bool
+                           , showColor :: Bool
+                           , showContext :: Bool
+                           , showAuthor :: Bool
+                           -- hideOptions :: 
+                           , hideGroup :: Bool
+                           , hideControlChars :: Bool
+                           , format :: FormatStyle
+                           -- formatTime ::
+                           -- timeFull :: 
+                           , tabSize :: Int
+                           , wideListing :: Bool
+                           , sortReverse :: Bool
+                           , sortType :: SortType
+                           , groupDirectories :: Bool
+                           , escape :: Bool
+                           , directory :: Bool
+                           , dired :: Bool
+                           , useHumanReadable :: Bool
+                           , useKilobytes :: Bool
+                           , useNumericIds :: Bool
+                           -- si :: 
+                           -- derefCommand :: Bool
+                           -- derefCommandSymlink :: Bool
+                           -- ignoreCommand :: 
+                           -- dereference :: Bool
+                           -- literal :: Bool
+                           -- quote :: Bool
+                           -- quoteStyle ::
+                           -- blockSize :: 
+}
+data IndicatorStyle = NoIndicator
+                    | SlashIndicator
+                    | TypeIndicator
+                    | ClassifyIndicator
+data FormatStyle = LongFormat
+                 | WithCommasFormat
+                 | HorizontalFormat
+                 | ManyPerLineFormat
+                 | OnePerLine
+data SortType = NoSort
+              | NameSort
+              | ExtensionSort
+              | SizeSort
+              | VersionSort
+              | TimeSort
+
+data FileInfo = FileInfo { name :: String
+                         , linkTarget :: FilePath
+                         --, stat :: 
+                         , fileType :: FileType
+                         , linkType :: LinkType
+                         --, securityContext :: 
+                         , linkOk :: Bool
+                         --, accessControlList ::
+                         , hasCapability :: Bool
+}
+data FileType = UnknownType
+              | FifoType
+              | CharDevType
+              | DirectoryType
+              | BlockDevType
+              | NormalType
+              | SymbolicLinkType
+              | SockType
+              | WhiteoutType
+              | ArgDirectoryType
+data LinkType = NoLink | HardLink | SoftLink
+
 
 {-
 --FROM GNU/LINUX LS
-
-static struct option const long_options[] =
-  {"all", no_argument, NULL, 'a'},
-  {"escape", no_argument, NULL, 'b'},
-  {"directory", no_argument, NULL, 'd'},
-  {"dired", no_argument, NULL, 'D'},
-  {"full-time", no_argument, NULL, FULL_TIME_OPTION},
-  {"group-directories-first", no_argument, NULL, GROUP_DIRECTORIES_FIRST_OPTION},
-  {"human-readable", no_argument, NULL, 'h'},
-  {"inode", no_argument, NULL, 'i'},
-  {"kibibytes", no_argument, NULL, 'k'},
-  {"numeric-uid-gid", no_argument, NULL, 'n'},
-  {"no-group", no_argument, NULL, 'G'},
-  {"hide-control-chars", no_argument, NULL, 'q'},
-  {"reverse", no_argument, NULL, 'r'},
-  {"size", no_argument, NULL, 's'},
-  {"width", required_argument, NULL, 'w'},
-  {"almost-all", no_argument, NULL, 'A'},
-  {"ignore-backups", no_argument, NULL, 'B'},
-  {"classify", no_argument, NULL, 'F'},
-  {"file-type", no_argument, NULL, FILE_TYPE_INDICATOR_OPTION},
-  {"si", no_argument, NULL, SI_OPTION},
-  {"dereference-command-line", no_argument, NULL, 'H'},
-  {"dereference-command-line-symlink-to-dir", no_argument, NULL, DEREFERENCE_COMMAND_LINE_SYMLINK_TO_DIR_OPTION},
-  {"hide", required_argument, NULL, HIDE_OPTION},
-  {"ignore", required_argument, NULL, 'I'},
-  {"indicator-style", required_argument, NULL, INDICATOR_STYLE_OPTION},
-  {"dereference", no_argument, NULL, 'L'},
-  {"literal", no_argument, NULL, 'N'},
-  {"quote-name", no_argument, NULL, 'Q'},
-  {"quoting-style", required_argument, NULL, QUOTING_STYLE_OPTION},
-  {"recursive", no_argument, NULL, 'R'},
-  {"format", required_argument, NULL, FORMAT_OPTION},
-  {"show-control-chars", no_argument, NULL, SHOW_CONTROL_CHARS_OPTION},
-  {"sort", required_argument, NULL, SORT_OPTION},
-  {"tabsize", required_argument, NULL, 'T'},
-  {"time", required_argument, NULL, TIME_OPTION},
-  {"time-style", required_argument, NULL, TIME_STYLE_OPTION},
-  {"color", optional_argument, NULL, COLOR_OPTION},
-  {"block-size", required_argument, NULL, BLOCK_SIZE_OPTION},
-  {"context", no_argument, 0, 'Z'},
-  {"author", no_argument, NULL, AUTHOR_OPTION},
-
-
-
-
-struct fileinfo
-    char *name;/* The file name.  */
-    char *linkname;/* For symbolic link, name of the file linked to, otherwise zero.  */
-    struct stat stat;
-    enum filetype filetype;
-    mode_t linkmode; /* For symbolic link and long listing, st_mode of file linked to, otherwise zero.  */
-    char *scontext;/* security context.  */
-    bool stat_ok;
-    bool linkok;/* For symbolic link and color printing, true if linked-to file exists, otherwise false.  */
-    enum acl_type acl_type;/* For long listings, true if the file has an access control list, or a security context.  */
-    bool has_capability;/* For color listings, true if a regular file has capability info.  */
-
-
-
-
-
 /* True means to display owner information.  -g turns this off.  */
 static bool print_owner = true;/* True means to display author information.  */
 static bool print_author;
@@ -237,15 +253,57 @@ enum format
     with_commas                 /* -m */
 
 
+Flags
+"all" 'a'
+"escape" 'b'
+"directory" 'd'
+"dired" 'D'
+"group-directories-first" GROUP_DIRECTORIES_FIRST_OPTION
+"human-readable" 'h'
+"inode" 'i'
+"kibibytes" 'k'
+"numeric-uid-gid" 'n'
+"no-group" 'G'
+"hide-control-chars" 'q'
+"reverse" 'r'
+"size" 's'
+"width" 'w'
+"almost-all" 'A'
+"ignore-backups" 'B'
+"classify" 'F'
+"file-type" FILE_TYPE_INDICATOR_OPTION
+"dereference-command-line" 'H'
+"dereference-command-line-symlink-to-dir" DEREFERENCE_COMMAND_LINE_SYMLINK_TO_DIR_OPTION
+"ignore" 'I'
+"dereference" 'L'
+"literal" 'N'
+"quote-name" 'Q'
+"recursive" 'R'
+"show-control-chars" SHOW_CONTROL_CHARS_OPTION
+"tabsize" 'T'
+"time" TIME_OPTION
+"color" COLOR_OPTION
+"context" 'Z'
+"author" AUTHOR_OPTION
+
+long_options[] =
+"full-time" FULL_TIME_OPTION
+"si" SI_OPTION
+"hide" HIDE_OPTION
+"indicator-style" INDICATOR_STYLE_OPTION
+"quoting-style" QUOTING_STYLE_OPTION
+"format" FORMAT_OPTION
+"sort" SORT_OPTION
+"time-style" TIME_STYLE_OPTION
+"block-size" BLOCK_SIZE_OPTION
+
+
+
+
 -}
 
 
-data LinkModes = NoLink | HardLink | SoftLink
 
-data IndicatorStyle = NoIndicator
-                    | SlashIndicator
-                    | TypeIndicator
-                    | ClassifyIndicator
 
 colorArguments = ["always", "yes", "force", "never", "no", "none", "auto", "tty", "if-tty"]
 
@@ -253,30 +311,9 @@ timeArguments = ["atime", "access", "use", "ctime", "status"]
 data TimeTypes = MTime | CTime | ATime
 
 sortArguments = ["none", "time", "size", "extension", "version"]
-data SortType = NoSort
-              | NameSort
-              | ExtensionSort
-              | SizeSort
-              | VersionSort
-              | TimeSort
 
 formatArguments = ["verbose", "long", "commas", "horizontal", "across", "vertical", "single-column"]
-data FormatTypes = LongFormat
-                 | WithCommasFormat
-                 | HorizontalFormat
-                 | ManyPerLineFormat
-                 | OnePerLine
 
-data FileType = UnknownType
-              | FifoType
-              | CharDevType
-              | DirectoryType
-              | BlockDevType
-              | NormalType
-              | SymbolicLinkType
-              | SockType
-              | WhiteoutType
-              | ArgDirectoryType
 
 
 
