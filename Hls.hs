@@ -197,6 +197,10 @@ data FileType = UnknownType
               | ArgDirectoryType
 data LinkType = NoLink | HardLink | SoftLink
 
+data CommandArgs = CommandArgs { flag :: String
+                               , name :: String
+
+}
 
 {-
 --FROM GNU/LINUX LS
