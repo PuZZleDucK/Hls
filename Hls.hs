@@ -3,6 +3,8 @@ module Hls where
 import System.Environment
 import System.Directory
 import System.FilePath
+import System.Posix.Files
+import System.Posix.Types
 import Control.Monad
 import System.Console.Terminfo.Base
 -- System.Console.Terminfo.Color
@@ -63,7 +65,7 @@ getFiles (dir:otherDirs) = (getFilesFromDir dir):(getFiles otherDirs)
 --current is all over the shop
 --now sorted, but going l2r then u2d... want transpose?!?!
 getFilesFromDir :: FilePath -> (FilePath, IO [String])
-getFilesFromDir dir = (dir, getDirectoryContents dir )
+getFilesFromDir dir = (dir, getDirectoryContents dir)
 
 --need to work out spacing before knowing list numbers and orders
 --use trial and error
@@ -115,6 +117,83 @@ widestFilename list = max ((length . head) list) (widestFilename (tail list))
 padDisplayString :: String -> Int -> String
 padDisplayString input targetLength | (length input) >= targetLength = input
                                     | otherwise = input ++ take (targetLength-(length input)) (repeat '_')
+
+
+--getListings :: [FilePath] -> LsOptions -> [(FilePath, (IO [String]))]
+--getListings [target] opts = getListing target opts
+--getListings (target:others) opts = (getListing target opts)++(getListings others opts)
+
+--getListing :: FilePath -> LsOptions -> [(FilePath, (IO [String]))]
+--getListing target opts = [(target, getDirectoryContents target)]
+
+--getFileInfo :: FilePath -> LsOptions -> IO FileInfo
+--getFileInfo path opts = do status <- getFileStatus path
+--                           let isPipe = (isNamedPipe status)
+--                           if(isPipe) then return FileInfo{ base = takeBaseName path, fileType = FifoType }
+--                                      else return FileInfo{ base = takeBaseName path, extention = path }
+
+getFileTypes :: FilePath -> IO [Maybe FileType]
+getFileTypes path = do status <- getFileStatus path 
+                       return [ if (isNamedPipe status) then Just FifoType else Nothing
+                              , if (isCharacterDevice status) then Just CharDevType else Nothing
+                              , if (isDirectory status) then Just DirectoryType else Nothing
+                              , if (isBlockDevice status) then Just BlockDevType else Nothing
+                              , if (isRegularFile status) then Just NormalType else Nothing
+                              , if (isSymbolicLink status) then Just SymbolicLinkType else Nothing
+                              , if (isSocket status) then Just SockType else Nothing
+                              ]
+
+getFileType :: FilePath -> IO FileType
+getFileType path = do maybeTypes <- getFileTypes path
+                      let justTypes = (catMaybes (maybeTypes))
+                      if length justTypes > 1
+                        then return UnknownType
+                        else return (head justTypes)
+
+
+--                      | otherwise = 
+--linkTarget :: FilePath
+--hasCapability :: Bool
+--fileType :: FileType
+--data FileType = UnknownType
+--              | FifoType
+--              | CharDevType
+--              | DirectoryType
+--              | BlockDevType
+--              | NormalType
+--              | SymbolicLinkType
+--              | SockType
+--              | WhiteoutType
+--              | ArgDirectoryType
+--linkType :: LinkType --links only
+--linkOk :: Bool --links only
+--containsFiles :: [FileInfo] --directories only
+
+
+
+
+--add fileExist guard
+--fileID status --iNode
+--getFileStatus path
+--getSymbolicLinkStatus
+--fileMode
+--fileOwner
+--fileGroup
+--fileSize
+--accessTime
+--modificationTime
+--statusChangeTime
+--
+--
+--
+--
+--
+--
+--
+--readSymbolicLink
+
+
+
 
 
 
@@ -175,15 +254,19 @@ data SortType = NoSort
               | VersionSort
               | TimeSort
 
-data FileInfo = FileInfo { name :: String
+data FileInfo = FileInfo { base :: String
+                         , extention :: String
                          , linkTarget :: FilePath
-                         --, stat :: 
-                         , fileType :: FileType
-                         , linkType :: LinkType
-                         --, securityContext :: 
-                         , linkOk :: Bool
-                         --, accessControlList ::
                          , hasCapability :: Bool
+                         , fileStatus ::  FileStatus
+                         , fileType :: FileType
+                         , linkType :: LinkType --links only
+                         , linkOk :: Bool --links only
+                         , containsFiles :: [FileInfo] --directories only
+                         --, inode :: 
+                         --, accessControlList ::
+                         --, securityContext :: 
+                         --, stat :: 
 }
 data FileType = UnknownType
               | FifoType
@@ -193,122 +276,82 @@ data FileType = UnknownType
               | NormalType
               | SymbolicLinkType
               | SockType
-              | WhiteoutType
-              | ArgDirectoryType
+              deriving (Show, Eq)
+--              | WhiteoutType --no unionfs support for now
+--              | ArgDirectoryType --couldn't even find this one
 data LinkType = NoLink | HardLink | SoftLink
 
-data CommandArgs = CommandArgs { commandFlag :: String
-                               , commandName :: String
-                               , commandDescription :: String
+--data CommandArgs = CommandArgs { commandFlag :: String
+--                               , commandName :: String
+--                               , commandDescription :: String
+--}
 
-}
-
-commandArgs = map (((uncurry.uncurry)) CommandArgs) [ (("g", "Suppress Owner"), "c")
-                                                    , (("",""),"")
-                                                    , (("",""),"")
-                                                    , (("",""),"")
-                                                    , (("",""),"")
-                                                    , (("",""),"")
-]
 
 {-
 --FROM GNU/LINUX LS
-/* True means to display group information.  -G and -o turn this off.  */
-/* True means print the user and group id's as numbers rather than as names.  -n  */
-static bool numeric_ids;
-static bool print_block_size;/* True means mention the size in blocks of each file.  -s  */
-/* 
-   
-   
-   
-   
 
-/* True means use colors to mark types.  Also define the different colors as well as the stuff for the LS_COLORS environment variable. The LS_COLORS variable is now in a termcap-like format.  */
+:: COMMAND FLAGS ::
+("g", "Suppress Owner", "")
+("G", "Suppress Group", "")
+("o", "Suppress Group", "")
+("n", "Numeric Ids", "Print the user and group id's as numbers rather than as names")
+("s", "Block Size", "Mention the size in blocks of each file")
+("color", "Color Types", "Use colors to mark types")
+("w", "Width of listing", "")
+("ignore", "Ignore", "Ignore '.', '..', and files")
+("indicator-style", "", "")
+("F", "indicator style", "")
+("p", "indicator style", "")
+("h", "Human readable options", "")
+("a", "all", "")
+("b", "escape", "")
+("d", "directories", "")
+("D", "dired", "")
+("group-directories-first", "group directories first", "")
+("i", "inode", "")
+("k", "kibibytes", "")
+("q", "hide-control-chars", "")
+("r", "reverse", "")
+("s", "size", "")
+("A", "almost-all", "")
+("B", "ignore-backups", "")
+("F", "classify", "")
+("H", "dereference-command-line", "")
+("I", "ignore", "")
+("L", "dereference", "")
+("N", "literal", "")
+("Q", "quote name", "")
+("R", "recursive", "")
+("T", "tabsize", "")
+("Z", "context", "")
+("full-time", "", "")
+("sort", "", "")
+("hide", "", "")
+("indicator-style", "", "")
+("quoting-style", "", "")
+("format", "", "")
+("time-style", "", "")
+("block-size", "", "")
+("si", "", "")
+("author", "", "")
+("color", "", "")
+("time", "", "")
+("show-control-chars", "", "")
+("dereference-command-line-symlink-to-dir", "", "")
+("file-type", "", "")
+
+
+    none,       /*     --indicator-style=none */'none' means don't mention the type of files.
+    slash,      /* -p, --indicator-style=slash */'slash' means mention directories only, with a '/'.
+    file_type,  /*     --indicator-style=file-type */'file_type' means mention file types.
+    classify    /* -F, --indicator-style=classify */'classify' means mention file types and mark executables.
+
 echo "$LS_COLORS"
 rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.axa=00;36:*.oga=00;36:*.spx=00;36:*.xspf=00;36:
 
 /* A linked list of shell-style globbing patterns.  If a non-argument file name matches any of these patterns, it is ignored. Controlled by -I.  Multiple -I options accumulate. The -B option adds '*~' and '.*~' to this list.  */
 
-
-/* The minimum width of a column is 3: 1 character for the name and 2 for the separating white space.  */
-#define MIN_COLUMN_WIDTH        3
-
-
-:: COMMAND FLAGS ::
--w   line length to use for breaking lines in many-per-line format. Can be set with
---ignore   Ignore '.', '..', and files
---indicator-style   Controlled by -F, -p, and --indicator-style.  */
-    none,       /*     --indicator-style=none */'none' means don't mention the type of files.
-    slash,      /* -p, --indicator-style=slash */'slash' means mention directories only, with a '/'.
-    file_type,  /*     --indicator-style=file-type */'file_type' means mention file types.
-    classify    /* -F, --indicator-style=classify */'classify' means mention file types and mark executables.
-/* -h Human-readable options for output, when printing block counts.  */
-enum sort_type
-    sort_none = -1,             /* -U */
-    sort_name,                  /* default */
-    sort_extension,             /* -X */
-    sort_size,                  /* -S */
-    sort_version,               /* -v */
-    sort_time,                  /* -t */
-   true means the opposite order in each case.  -r  */
-enum time_type
-    time_mtime,                 /* default */
-    time_ctime,                 /* -c */
-    time_atime,                 /* -u */
-enum format
-    long_format,                /* -l and other options that imply -l */
-    one_per_line,               /* -1 */
-    many_per_line,              /* -C */
-    horizontal,                 /* -x */
-    with_commas                 /* -m */
-
-
-Flags
-"all" 'a'
-"escape" 'b'
-"directory" 'd'
-"dired" 'D'
-"group-directories-first" GROUP_DIRECTORIES_FIRST_OPTION
-"human-readable" 'h'
-"inode" 'i'
-"kibibytes" 'k'
-"numeric-uid-gid" 'n'
-"no-group" 'G'
-"hide-control-chars" 'q'
-"reverse" 'r'
-"size" 's'
-"width" 'w'
-"almost-all" 'A'
-"ignore-backups" 'B'
-"classify" 'F'
-"file-type" FILE_TYPE_INDICATOR_OPTION
-"dereference-command-line" 'H'
-"dereference-command-line-symlink-to-dir" DEREFERENCE_COMMAND_LINE_SYMLINK_TO_DIR_OPTION
-"ignore" 'I'
-"dereference" 'L'
-"literal" 'N'
-"quote-name" 'Q'
-"recursive" 'R'
-"show-control-chars" SHOW_CONTROL_CHARS_OPTION
-"tabsize" 'T'
-"time" TIME_OPTION
-"color" COLOR_OPTION
-"context" 'Z'
-"author" AUTHOR_OPTION
-
-long_options[] =
-"full-time" FULL_TIME_OPTION
-"si" SI_OPTION
-"hide" HIDE_OPTION
-"indicator-style" INDICATOR_STYLE_OPTION
-"quoting-style" QUOTING_STYLE_OPTION
-"format" FORMAT_OPTION
-"sort" SORT_OPTION
-"time-style" TIME_STYLE_OPTION
-"block-size" BLOCK_SIZE_OPTION
-
-
-
+/* The minimum width of a column is 3: 1 character for the name and 2 for the separating white space.  */  #define MIN_COLUMN_WIDTH        3
 
 -}
 
