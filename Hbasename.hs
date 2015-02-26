@@ -3,6 +3,7 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
+import System.FilePath
 
 main :: IO ()
 main = do
@@ -11,12 +12,17 @@ main = do
   let options = processArgs args defaultOptions
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
+  runTermOutput term (termText (showError options))
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
 --  runTermOutput term (termText (showOutput options)) --if not (help or ver)?
   return ()
 
 --showOutput :: YesOptions -> String
+
+showError :: BasenameOptions -> String
+showError opts | (null (targets opts)) = concat (intersperse "\n" errorTest)
+               | otherwise = ""
 
 showHelp :: BasenameOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
@@ -32,16 +38,17 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> processArgs xs opts
+  _ -> processArgs xs opts{targets = x:(targets opts)}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
 defaultOptions :: BasenameOptions
-defaultOptions = BasenameOptions False False "" False False
+defaultOptions = BasenameOptions [] False False "" False False
 
-data BasenameOptions = BasenameOptions { multipleInputs :: Bool
+data BasenameOptions = BasenameOptions { targets :: [String]
+                                       , multipleInputs :: Bool
                                        , suppressNewline :: Bool --zero
                                        , removeSuffix :: String
                                        , displayVersion :: Bool
@@ -64,7 +71,7 @@ helpText = [ "Usage: basename NAME [SUFFIX]"
            , "  basename include/stdio.h .h     -> \"stdio\""
            , "  basename -s .h include/stdio.h  -> \"stdio\""
            , "  basename -a any/str1 any/str2   -> \"str1\" followed by \"str2\""
-           , "GNU coreutils online help: <http://www.gnu.org/software/coreutils/>"
+           , "GNU coreutils online help: <http://www.gnu.org/software/coreutils/>\n"
            ]
 
 versionText :: [String]
@@ -75,17 +82,10 @@ versionText = [ "Hyes (Haskell implementation of GNU basename) 1.0"
               , "This is free software: you are free to change and redistribute it."
               , "There is NO WARRANTY, to the extent permitted by law."
               , "Written by David MacKenzie."
-              , "Ported by PuZZleDucK."
+              , "Ported by PuZZleDucK.\n"
               ]
 
-
-
-
--- Just performed a quick & dirty comparison running yes and Hyes
--- 1 puzzleduck puzzleduck 225931484 Feb 26 18:35 10comp.txt
--- 1 puzzleduck puzzleduck 368005566 Feb 27 02:37 10fast.txt -- half way already  :D
--- 1 puzzleduck puzzleduck 718757888 Feb 26 18:28 10gnu.txt
--- 1 puzzleduck puzzleduck  16453786 Feb 26 18:28 10.txt
-
-
+errorTest = [ "basename: missing operand"
+            , "Try `basename --help' for more information.\n"
+            ]
 
