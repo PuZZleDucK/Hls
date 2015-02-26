@@ -26,28 +26,26 @@ showVersion :: BasenameOptions -> String
 showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
                  | otherwise = ""
 
+--arguments are going to have values this time... might need a better solution
 processArgs :: [String] -> BasenameOptions -> BasenameOptions
-processArgs [] opts = if (displayString opts) == ""
-  then opts{displayString = "y"}
-  else opts{displayString = stripQuotes (displayString opts)}
+processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> if priorString == ""
-    then processArgs xs opts{displayString = x}
-    else processArgs xs opts{displayString = priorString++" "++x}
-      where priorString = displayString opts
+  _ -> processArgs xs opts
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
 defaultOptions :: BasenameOptions
-defaultOptions = BasenameOptions "" False False
+defaultOptions = BasenameOptions False False "" False False
 
-data BasenameOptions = BasenameOptions { displayString :: String
-                                       , displayHelp :: Bool
-                                       , displayVersion :: Bool } deriving (Show, Eq)
+data BasenameOptions = BasenameOptions { multipleInputs :: Bool
+                                       , suppressNewline :: Bool --zero
+                                       , removeSuffix :: String
+                                       , displayVersion :: Bool
+                                       , displayHelp :: Bool } deriving (Show, Eq)
 
 
 helpText :: [String]
@@ -67,11 +65,10 @@ helpText = [ "Usage: basename NAME [SUFFIX]"
            , "  basename -s .h include/stdio.h  -> \"stdio\""
            , "  basename -a any/str1 any/str2   -> \"str1\" followed by \"str2\""
            , "GNU coreutils online help: <http://www.gnu.org/software/coreutils/>"
-           , "For complete documentation, run: info coreutils 'basename invocation'"
            ]
 
 versionText :: [String]
-versionText = [ "Hyes (Haskell implementation of GNU yes) 1.0"
+versionText = [ "Hyes (Haskell implementation of GNU basename) 1.0"
               , "derrived from: basename (GNU coreutils) 8.23"
               , "Copyright (C) 2014 Free Software Foundation, Inc."
               , "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
