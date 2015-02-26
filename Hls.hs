@@ -1,5 +1,5 @@
 
-module Hls where
+module Main where
 import System.Environment
 import System.Directory
 import System.FilePath
@@ -132,39 +132,51 @@ padDisplayString input targetLength | (length input) >= targetLength = input
 --                           if(isPipe) then return FileInfo{ base = takeBaseName path, fileType = FifoType }
 --                                      else return FileInfo{ base = takeBaseName path, extention = path }
 
-getFileTypes :: FilePath -> IO [Maybe FileType]
-getFileTypes path = do status <- getFileStatus path 
-                       return [ if (isNamedPipe status) then Just FifoType else Nothing
-                              , if (isCharacterDevice status) then Just CharDevType else Nothing
-                              , if (isDirectory status) then Just DirectoryType else Nothing
-                              , if (isBlockDevice status) then Just BlockDevType else Nothing
-                              , if (isRegularFile status) then Just NormalType else Nothing
-                              , if (isSymbolicLink status) then Just SymbolicLinkType else Nothing
-                              , if (isSocket status) then Just SockType else Nothing
-                              ]
 
-getFileType :: FilePath -> IO FileType
-getFileType path = do maybeTypes <- getFileTypes path
-                      let justTypes = (catMaybes (maybeTypes))
-                      if length justTypes > 1
-                        then return UnknownType
-                        else return (head justTypes)
+dropBase :: FilePath -> String
+dropBase path | baseLength < totalLength = drop (baseLength+1) path
+              | otherwise = ""
+  where baseLength = length (takeBaseName path)
+        totalLength = length path
+
+getFileInfo :: FilePath -> LsOptions -> IO FileInfo
+getFileInfo path opts = do thisStatus <- getFileStatus path
+                           thisType <- getFileType thisStatus
+                           thisTarget <- readSymbolicLink path
+--                           thisLinkType <- 
+                           return FileInfo { base = takeBaseName path
+                                           , extention = (dropBase path)
+                                           , fileType = thisType
+                                           , inode = fileID thisStatus
+                                           , linkTarget = thisTarget
+                                           , linkType = NoLink
+                                           , hasCapability = False
+                                           , linkOk = False
+                                           , containsFiles = []
+                                           }
+
+getFileTypes :: FileStatus -> IO [Maybe FileType]
+getFileTypes status = do
+                              return [ if (isNamedPipe status) then Just FifoType else Nothing
+                                     , if (isCharacterDevice status) then Just CharDevType else Nothing
+                                     , if (isDirectory status) then Just DirectoryType else Nothing
+                                     , if (isBlockDevice status) then Just BlockDevType else Nothing
+                                     , if (isRegularFile status) then Just NormalType else Nothing
+                                     , if (isSymbolicLink status) then Just SymbolicLinkType else Nothing
+                                     , if (isSocket status) then Just SockType else Nothing
+                                     ]
+
+getFileType :: FileStatus -> IO FileType
+getFileType status = do maybeTypes <- getFileTypes status
+                        let justTypes = (catMaybes (maybeTypes))
+                        if length justTypes > 1
+                          then return UnknownType
+                          else return (head justTypes)
 
 
 --                      | otherwise = 
 --linkTarget :: FilePath
 --hasCapability :: Bool
---fileType :: FileType
---data FileType = UnknownType
---              | FifoType
---              | CharDevType
---              | DirectoryType
---              | BlockDevType
---              | NormalType
---              | SymbolicLinkType
---              | SockType
---              | WhiteoutType
---              | ArgDirectoryType
 --linkType :: LinkType --links only
 --linkOk :: Bool --links only
 --containsFiles :: [FileInfo] --directories only
@@ -173,8 +185,7 @@ getFileType path = do maybeTypes <- getFileTypes path
 
 
 --add fileExist guard
---fileID status --iNode
---getFileStatus path
+-- status --iNode
 --getSymbolicLinkStatus
 --fileMode
 --fileOwner
@@ -190,7 +201,7 @@ getFileType path = do maybeTypes <- getFileTypes path
 --
 --
 --
---readSymbolicLink
+--
 
 
 
@@ -256,14 +267,14 @@ data SortType = NoSort
 
 data FileInfo = FileInfo { base :: String
                          , extention :: String
+                         , inode :: FileID
                          , linkTarget :: FilePath
                          , hasCapability :: Bool
-                         , fileStatus ::  FileStatus
+--                         , fileStatus ::  FileStatus --this is what i'm culling
                          , fileType :: FileType
                          , linkType :: LinkType --links only
                          , linkOk :: Bool --links only
                          , containsFiles :: [FileInfo] --directories only
-                         --, inode :: 
                          --, accessControlList ::
                          --, securityContext :: 
                          --, stat :: 
