@@ -6,16 +6,14 @@ import Data.List
 
 main :: IO ()
 main = do
---  putStrLn (" :: Haskell yes :: ")
   term <- setupTermFromEnv
   args <- getArgs
   let options = processArgs args defaultOptions
-
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
-  runTermOutput term (termText (showOutput options))
+  runTermOutput term (termText (showOutput options)) --if not (help or ver)?
   return ()
 
 showOutput :: YesOptions -> String
@@ -55,23 +53,30 @@ data YesOptions = YesOptions { displayString :: String
 
 helpText :: [String]
 helpText = [ "Usage: yes [STRING]..."
-           , "or:  yes OPTION"
+           , "or:  yes [OPTION]"
            , "Repeatedly output a line with all specified STRING(s), or `y'."
            , "  --help     display this help and exit"
            , "  --version  output version information and exit"
-           , "Report yes bugs to bug-coreutils@gnu.org"
+           , "Report Hyes bugs to PuZZleDucK+Hyes@gmail.com"
            , "GNU coreutils home page: <http://www.gnu.org/software/coreutils/>"
-           , "General help using GNU software: <http://www.gnu.org/gethelp/>"
            ]
 
 versionText :: [String]
-versionText = [ "yes (GNU coreutils) 8.13"
+versionText = [ "Hyes (Haskell implementation of GNU yes) 1.0"
+              , "derrived from: yes (GNU coreutils) 8.13"
               , "Copyright (C) 2011 Free Software Foundation, Inc."
-              , "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
-              , "This is free software: you are free to change and redistribute it."
-              , "There is NO WARRANTY, to the extent permitted by law."
               , "Written by David MacKenzie."
+              , "Ported by PuZZleDucK."
               ]
+
+
+
+
+-- Just performed a quick & dirty comparison running yes and Hyes
+-- 1 puzzleduck puzzleduck 225931484 Feb 26 18:35 10comp.txt
+-- 1 puzzleduck puzzleduck 368005566 Feb 27 02:37 10fast.txt -- half way already  :D
+-- 1 puzzleduck puzzleduck 718757888 Feb 26 18:28 10gnu.txt
+-- 1 puzzleduck puzzleduck  16453786 Feb 26 18:28 10.txt
 
 
 
