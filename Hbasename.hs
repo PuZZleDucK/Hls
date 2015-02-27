@@ -4,6 +4,9 @@ import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
 import System.FilePath
+import Data.Text (stripSuffix, pack, dropWhile, splitOn) -- pack to make text
+import Data.Maybe
+import Control.Monad
 
 main :: IO ()
 main = do
@@ -19,8 +22,18 @@ main = do
   return ()
 
 showOutput :: BasenameOptions -> String
-showOutput opts = concat (intersperse interChar (targets opts))
+showOutput opts = concat (intersperse interChar (formatOutput (targets opts) opts))
   where interChar = if (suppressNewline opts) then "" else "\n"
+
+
+-- Data.List.last (Data.Text.splitOn (pack (pathSeparator:[])) (pack "this/that/other"))
+formatOutput :: [String] -> BasenameOptions -> [String]
+formatOutput [] _ = []
+formatOutput (x:xs) opts = (fromJust (liftM show (stripSuffix suffix (last ((splitOn seperator) (pack x)))))):(formatOutput xs opts)
+  where suffix = pack (removeSuffix opts)
+        seperator = pack (pathSeparator:[])
+
+
 
 showError :: BasenameOptions -> String
 showError opts | (null (targets opts)) = concat (intersperse "\n" errorTest)
