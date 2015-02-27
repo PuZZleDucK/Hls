@@ -10,15 +10,17 @@ main = do
   term <- setupTermFromEnv
   args <- getArgs
   let options = processArgs args defaultOptions
---  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showError options))
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
---  runTermOutput term (termText (showOutput options)) --if not (help or ver)?
+  runTermOutput term (termText (showOutput options)) --if not (help or ver)?
+  runTermOutput term (termText ("Options: "++(show options)++"\n"))
   return ()
 
---showOutput :: YesOptions -> String
+showOutput :: BasenameOptions -> String
+showOutput opts = concat (intersperse interChar (targets opts))
+  where interChar = if (suppressNewline opts) then "" else "\n"
 
 showError :: BasenameOptions -> String
 showError opts | (null (targets opts)) = concat (intersperse "\n" errorTest)
@@ -32,13 +34,24 @@ showVersion :: BasenameOptions -> String
 showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
                  | otherwise = ""
 
---arguments are going to have values this time... might need a better solution
 processArgs :: [String] -> BasenameOptions -> BasenameOptions
 processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> processArgs xs opts{targets = x:(targets opts)}
+  "--zero" -> processArgs xs opts{suppressNewline = True}
+  "-z" -> processArgs xs opts{suppressNewline = True}
+  "--multiple" -> processArgs xs opts{multipleInputs = True}
+  "-a" -> processArgs xs opts{multipleInputs = True}
+  "-s" -> processArgs (drop 1 xs) opts{removeSuffix = head xs}
+  _ -> if (x `startsWith` "--suffix=") then processArgs xs opts{removeSuffix = (drop 9 x)}
+                                       else processArgs xs opts{targets = (targets opts)++[x]}
+
+startsWith :: String -> String -> Bool
+startsWith (x:xs) (y:ys) | x==y = startsWith xs ys
+                         | otherwise = False
+startsWith _ [] = True
+startsWith [] _ = False
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
@@ -75,7 +88,7 @@ helpText = [ "Usage: basename NAME [SUFFIX]"
            ]
 
 versionText :: [String]
-versionText = [ "Hyes (Haskell implementation of GNU basename) 1.0"
+versionText = [ "Hbasename (Haskell implementation of GNU basename) 1.0"
               , "derrived from: basename (GNU coreutils) 8.23"
               , "Copyright (C) 2014 Free Software Foundation, Inc."
               , "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
