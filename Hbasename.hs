@@ -17,7 +17,7 @@ main = do
   runTermOutput term (termText (showError options))
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
-  runTermOutput term (termText (showOutput options)) --if not (help or ver)?
+  runTermOutput term (termText ((showOutput options)++"\n")) --if not (help or ver)?
   runTermOutput term (termText ("Options: "++(show options)++"\n"))
   return ()
 
@@ -29,11 +29,14 @@ showOutput opts = concat (intersperse interChar (formatOutput (targets opts) opt
 -- Data.List.last (Data.Text.splitOn (pack (pathSeparator:[])) (pack "this/that/other"))
 formatOutput :: [String] -> BasenameOptions -> [String]
 formatOutput [] _ = []
-formatOutput (x:xs) opts = (fromJust (liftM show (stripSuffix suffix (last ((splitOn seperator) (pack x)))))):(formatOutput xs opts)
-  where suffix = pack (removeSuffix opts)
+formatOutput (x:xs) opts = ( (stripQuotes) (stripSuffixIfThere (suffix) ( (show ((splitOn seperator) (pack x))))) ):(formatOutput xs opts)
+  where suffix =  (removeSuffix opts)
         seperator = pack (pathSeparator:[])
 
 
+stripSuffixIfThere :: String -> String -> String
+stripSuffixIfThere suff str = case (stripSuffix (pack suff) (pack str)) of Nothing -> show str
+                                                                           Just x -> show x
 
 showError :: BasenameOptions -> String
 showError opts | (null (targets opts)) = concat (intersperse "\n" errorTest)
