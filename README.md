@@ -27,6 +27,7 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * chroot
 * sleep
 * date
+
 ### ToDo - Easy: ###
 * uniq / seq / shuf / sort
 * printenv / pwd / uptime / groups / hostid / hostname
