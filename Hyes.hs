@@ -17,7 +17,8 @@ main = do
   return ()
 
 showOutput :: YesOptions -> String
-showOutput opts = (displayString opts)++"\n"++(showOutput opts)
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = (displayString opts)++"\n"++(showOutput opts)
+                | otherwise = ""
 
 showHelp :: YesOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
@@ -50,7 +51,6 @@ data YesOptions = YesOptions { displayString :: String
                              , displayHelp :: Bool
                              , displayVersion :: Bool } deriving (Show, Eq)
 
-
 helpText :: [String]
 helpText = [ "Usage: yes [STRING]..."
            , "or:  yes [OPTION]"
@@ -58,7 +58,7 @@ helpText = [ "Usage: yes [STRING]..."
            , "  --help     display this help and exit"
            , "  --version  output version information and exit"
            , "Report Hyes bugs to PuZZleDucK+Hyes@gmail.com"
-           , "GNU coreutils home page: <http://www.gnu.org/software/coreutils/>"
+           , "GNU coreutils home page: <http://www.gnu.org/software/coreutils/>\n\n"
            ]
 
 versionText :: [String]
@@ -66,7 +66,7 @@ versionText = [ "Hyes (Haskell implementation of GNU yes) 1.0"
               , "derrived from: yes (GNU coreutils) 8.13"
               , "Copyright (C) 2011 Free Software Foundation, Inc."
               , "Written by David MacKenzie."
-              , "Ported by PuZZleDucK."
+              , "Ported by PuZZleDucK.\n\n"
               ]
 
 
