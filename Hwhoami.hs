@@ -3,6 +3,7 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
+import Control.Monad
 
 main :: IO ()
 main = do
@@ -13,12 +14,18 @@ main = do
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
-  runTermOutput term (termText (showOutput options))
+  o <- showOutput options
+  runTermOutput term (termText (o))
   return ()
 
-showOutput :: WhoamiOptions -> String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = "<username_here>\n"
-                | otherwise = ""
+showOutput :: WhoamiOptions -> IO String
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = getUsername
+                | otherwise = return ""
+
+getUsername :: IO String
+getUsername = do e <- getEnvironment
+                 return (((snd . head) (filter (\x -> (fst x)=="USER") e))++"\n")
+
 
 showHelp :: WhoamiOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
