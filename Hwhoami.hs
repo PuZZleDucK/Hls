@@ -10,7 +10,7 @@ main = do
   term <- setupTermFromEnv
   args <- getArgs
   let options = processArgs args defaultOptions
-  runTermOutput term (termText ("Options: "++(show options)++"\n"))
+--  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
