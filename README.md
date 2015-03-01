@@ -38,11 +38,13 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * nice
 * du
 * wc (prototype done)
+
 ### Hard - Have other prerequisites: ###
 * tee
 * stty
 * stat
 * stdbuf
+
 ### Unknown - What do they even do?: ###
 * who
 * unexpand
