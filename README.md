@@ -10,6 +10,8 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * whoami ==> Hwhoami (done)
 * basename ==> Hbasename (in principle done, some formatting todo)
 * ls ==> Hls (work in progress, needs to work on real IO, colors, formats...)
+* uniq ==> Started (lots to do, almost all)
+* echo ==> Next target
 
 ### ToDo - Interesting: ###
 * users
@@ -29,10 +31,10 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * date
 
 ### ToDo - Easy: ###
-* uniq / seq / shuf / sort
+* seq / shuf / sort
 * printenv / pwd / uptime / groups / hostid / hostname
 * uname / uname-arch / uname-uname
-* truncate / tail / head / echo / cat
+* truncate / tail / head / cat
 * touch
 * split
 * rm / rmdir / mv / mkdir / cp / chgrp / chmod / chown
