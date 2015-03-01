@@ -14,6 +14,9 @@ main = do
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
+  input <- [oh, this!]
+  if (input == lastInput) then "" [and this!!!]
+                          else input
   output <- showOutput options
   runTermOutput term (termText (output))
   return ()
@@ -47,8 +50,20 @@ defaultOptions = UniqOptions False False
 
 data UniqOptions = UniqOptions
   { displayHelp :: Bool
-  , displayVersion :: Bool } deriving (Show, Eq)
+  , displayVersion :: Bool
+  , prefixCount :: Bool
+  , onlyDuplicates :: Bool
+  , allDuplicates :: DuplicateMethod
+  , skipFirstNFields :: Integer
+  , groupOutput :: GroupingMethod
+  , ignoreCase :: Boolean
+  , skipFirstNChars :: Integer
+  , onlyUnique :: Boolean
+  , suppressNewline :: Boolean
+  , checkNChars } deriving (Show, Eq)
 
+data DuplicateMethod = DupeNone | DupePrepend | DupeSeperate
+data GroupingMethod = GroupSeperate | GroupPrepend | GroupAppend | GroupBoth
 
 helpText :: [String]
 helpText = [ "Usage: uniq [OPTION]... [INPUT [OUTPUT]]"
