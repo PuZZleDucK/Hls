@@ -18,20 +18,20 @@ main = do
   runTermOutput term (termText (output))
   return ()
 
-showOutput :: <app-name>Options -> IO String
+showOutput :: UsersOptions -> IO String
 showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return "" -- <do-stuff-Here>
                 | otherwise = return ""
 
 
-showHelp :: <app-name>Options -> String
+showHelp :: UsersOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
               | otherwise = ""
 
-showVersion :: <app-name>Options -> String
+showVersion :: UsersOptions -> String
 showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
                  | otherwise = ""
 
-processArgs :: [String] -> <app-name>Options -> <app-name>Options
+processArgs :: [String] -> UsersOptions -> UsersOptions
 processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
@@ -42,10 +42,10 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: <app-name>Options
-defaultOptions = <app-name>Options False False
+defaultOptions :: UsersOptions
+defaultOptions = UsersOptions False False
 
-data <app-name>Options = <app-name>Options
+data UsersOptions = UsersOptions
   { displayHelp :: Bool
   , displayVersion :: Bool } deriving (Show, Eq)
 
