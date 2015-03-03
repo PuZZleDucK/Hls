@@ -35,6 +35,18 @@ processText (c:cx) = if isEscape c then (escape (head cx)):(processText (drop 1 
                                    else c:(processText cx)
 
 escape :: Char -> Char
+escape '\\' = '\\'
+escape 'a' = '\a'     -- alert (BEL)"
+escape 'b' = '\b'     -- backspace"
+--escape 'c' = '\'      produce no further output"
+--escape 'e' = '\'      escape"
+escape 'f' = '\f'     -- form feed"
+escape 'n' = '\n'
+escape 'r' = '\r'     -- carriage return"
+escape 't' = '\t'     -- horizontal tab"
+escape 'v' = '\v'     -- vertical tab"
+--0NNN   byte with octal value NNN (1 to 3 digits)"
+--xHH    byte with hexadecimal value HH (1 to 2 digits)"
 escape _ = '#'
 
 isEscape :: Char -> Bool
