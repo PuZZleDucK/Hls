@@ -14,13 +14,14 @@ main = do
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
-  output <- showOutput options
-  runTermOutput term (termText (output))
+  
+  runTermOutput term (termText (showOutput options))
   return ()
 
-showOutput :: EchoOptions -> IO String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return "" -- <do-stuff-Here>
-                | otherwise = return ""
+showOutput :: EchoOptions -> String
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = (concat (intersperse " " (echoText opts)))++seperator
+                | otherwise = ""
+  where seperator = if (suppressNewline opts) then "" else "\n"
 
 
 showHelp :: EchoOptions -> String
@@ -36,18 +37,24 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> processArgs xs opts
+  "-n" -> processArgs xs opts{suppressNewline = True}
+  "-e" -> processArgs xs opts{enableEscapeSequences = True}
+  "-E" -> processArgs xs opts{enableEscapeSequences = False}
+  x -> processArgs xs opts{echoText = (echoText opts)++[x]}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
 defaultOptions :: EchoOptions
-defaultOptions = EchoOptions False False
+defaultOptions = EchoOptions False False False False []
 
 data EchoOptions = EchoOptions
   { displayHelp :: Bool
-  , displayVersion :: Bool } deriving (Show, Eq)
+  , displayVersion :: Bool
+  , suppressNewline :: Bool
+  , enableEscapeSequences :: Bool
+  , echoText :: [String] } deriving (Show, Eq)
 
 
 helpText :: [String]
