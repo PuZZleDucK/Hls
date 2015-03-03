@@ -10,17 +10,20 @@ main = do
   term <- setupTermFromEnv
   args <- getArgs
   let options = processArgs args defaultOptions
-  runTermOutput term (termText ("Options: "++(show options)++"\n"))
+--  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
   output <- showOutput options
-  runTermOutput term (termText (output))
+  runTermOutput term (termText (output++"\n"))
   return ()
 
 showOutput :: SeqOptions -> IO String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return "" -- <do-stuff-Here>
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return (concat (intersperse "\n" (map show [sStart,(sStart+sInc)..sEnd])))
                 | otherwise = return ""
+  where sStart = if (seqStart opts) == (-1) then 1 else seqStart opts
+        sEnd = if (seqEnd opts) == (-1) then 1 else seqEnd opts
+        sInc = if (seqIncrement opts) == (-1) then 1 else seqIncrement opts
 
 
 showHelp :: SeqOptions -> String
@@ -36,7 +39,13 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> processArgs xs opts
+  x -> if (seqEnd opts) == (-1)
+    then processArgs xs opts{seqEnd = (read x)::Integer}
+    else if (seqStart opts) == (-1)
+      then processArgs xs opts{seqEnd = (read x)::Integer, seqStart = (seqEnd opts)}
+      else if (seqIncrement opts) == (-1)
+        then processArgs xs opts{seqIncrement = (read x)::Integer}
+        else processArgs xs opts
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
@@ -83,7 +92,7 @@ helpText = [ "Usage: /home/bminerds/x/coreutils/src/seq [OPTION]... LAST"
            ]
 
 versionText :: [String]
-versionText = [ "H<app-name> (Haskell implementation of GNU <app-name>) 1.0"
+versionText = [ "Hseq (Haskell implementation of GNU seq) 1.0"
               , "derrived from: seq (GNU coreutils) 8.23.126-99f76"
               , "Copyright (C) 2015 Free Software Foundation, Inc."
               , "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
