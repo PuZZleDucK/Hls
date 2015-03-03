@@ -19,10 +19,26 @@ main = do
   return ()
 
 showOutput :: EchoOptions -> String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = (concat (intersperse " " (echoText opts)))++seperator
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = (concat (intersperse " " displayText))++seperator
                 | otherwise = ""
   where seperator = if (suppressNewline opts) then "" else "\n"
+        displayText = if (enableEscapeSequences opts) then processEscapes (echoText opts)
+                                                      else echoText opts
 
+processEscapes :: [String] -> [String]
+processEscapes [] = []
+processEscapes (x:xs) = (processText x):(processEscapes xs)
+
+processText :: String -> String
+processText [] = []
+processText (c:cx) = if isEscape c then (escape (head cx)):(processText (drop 1 cx))
+                                   else c:(processText cx)
+
+escape :: Char -> Char
+escape _ = '#'
+
+isEscape :: Char -> Bool
+isEscape c = if c == '\\' then True else False
 
 showHelp :: EchoOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
