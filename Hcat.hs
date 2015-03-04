@@ -10,8 +10,8 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
-  runTermOutput term (termText ("Options: "++(show options)++"\n"))
+  let options = processArgs args defaultCat
+--  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
@@ -46,8 +46,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: CatOptions
-defaultOptions = CatOptions False False [] False False False False False False
+defaultCat :: CatOptions
+defaultCat = CatOptions False False [] False False False False False False
 
 data CatOptions = CatOptions
   { displayHelp :: Bool

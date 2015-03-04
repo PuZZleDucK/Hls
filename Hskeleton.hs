@@ -9,7 +9,7 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args default<app-name>
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
@@ -42,8 +42,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: <app-name>Options
-defaultOptions = <app-name>Options False False
+default<app-name> :: <app-name>Options
+default<app-name> = <app-name>Options False False
 
 data <app-name>Options = <app-name>Options
   { displayHelp :: Bool

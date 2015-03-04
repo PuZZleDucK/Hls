@@ -4,13 +4,17 @@ import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
 import Control.Monad
-import Text.Parsec
+import Text.Parsec hiding ((<|>), many)
+import Text.Parsec.String
+import Text.Parsec.Char
+import Text.ParserCombinators.Parsec.Char
+import Numeric
 
 main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args defaultEcho
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
@@ -51,6 +55,23 @@ escape text | head text == 'v' = '\v'     -- vertical tab"
 --xHH    byte with hexadecimal value HH (1 to 2 digits)"
 escape _ = '#'
 
+
+-- usage: parse parseHex [] "x41stuff"
+parseHex :: CharParser () Char
+parseHex = do char 'x'
+              a <- hexDigit
+              b <- hexDigit
+              let ((d,_):_) = readHex [a,b]
+              return . toEnum $ d
+
+parseOctal :: CharParser () Char
+parseOctal = do char '0'
+                a <- octDigit
+                b <- octDigit
+                c <- octDigit
+                let ((d,_):_) = readOct [a,b,c]
+                return . toEnum $ d
+
 isEscape :: Char -> Bool
 isEscape c = if c == '\\' then True else False
 
@@ -76,8 +97,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: EchoOptions
-defaultOptions = EchoOptions False False False False []
+defaultEcho :: EchoOptions
+defaultEcho = EchoOptions False False False False []
 
 data EchoOptions = EchoOptions
   { displayHelp :: Bool

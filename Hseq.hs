@@ -9,7 +9,7 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args defaultSeq
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
@@ -53,8 +53,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: SeqOptions
-defaultOptions = SeqOptions False False (-1) (-1) (-1) "" "\n" False
+defaultSeq :: SeqOptions
+defaultSeq = SeqOptions False False (-1) (-1) (-1) "" "\n" False
 
 data SeqOptions = SeqOptions
   { displayHelp :: Bool

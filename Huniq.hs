@@ -9,16 +9,16 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args defaultUniq
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
-  input <- [oh, this!]
-  if (input == lastInput) then "" [and this!!!]
-                          else input
-  output <- showOutput options
-  runTermOutput term (termText (output))
+--  input <- [oh, this!]
+--  if (input == lastInput) then "" -- [and this!!!]
+--                          else input
+--  output <- showOutput options
+--  runTermOutput term (termText (output))
   return ()
 
 showOutput :: UniqOptions -> IO String
@@ -45,8 +45,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: UniqOptions
-defaultOptions = UniqOptions False False
+defaultUniq :: UniqOptions
+defaultUniq = UniqOptions False False False False DupeNone 0 GroupSeperate False 0 True False (-1)
 
 data UniqOptions = UniqOptions
   { displayHelp :: Bool
@@ -56,14 +56,14 @@ data UniqOptions = UniqOptions
   , allDuplicates :: DuplicateMethod
   , skipFirstNFields :: Integer
   , groupOutput :: GroupingMethod
-  , ignoreCase :: Boolean
+  , ignoreCase :: Bool
   , skipFirstNChars :: Integer
-  , onlyUnique :: Boolean
-  , suppressNewline :: Boolean
-  , checkNChars } deriving (Show, Eq)
+  , onlyUnique :: Bool
+  , suppressNewline :: Bool
+  , checkNChars :: Integer } deriving (Show, Eq)
 
-data DuplicateMethod = DupeNone | DupePrepend | DupeSeperate
-data GroupingMethod = GroupSeperate | GroupPrepend | GroupAppend | GroupBoth
+data DuplicateMethod = DupeNone | DupePrepend | DupeSeperate deriving (Show, Eq)
+data GroupingMethod = GroupSeperate | GroupPrepend | GroupAppend | GroupBoth deriving (Show, Eq)
 
 helpText :: [String]
 helpText = [ "Usage: uniq [OPTION]... [INPUT [OUTPUT]]"

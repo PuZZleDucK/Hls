@@ -8,14 +8,17 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 ### Done(ish): ###
 * yes ==> Hyes (done)
 * whoami ==> Hwhoami (done)
-* basename ==> Hbasename (in principle done, some formatting todo)
+* basename ==> Hbasename (done)
 * ls ==> Hls (work in progress, needs to work on real IO, colors, formats...)
-* uniq ==> Started (lots to do, almost all)
-* echo ==> Next target
+* uniq ==> Huniq (Started, lots to do, almost all, need repl loop)
+* echo ==> Hecho (mostly working)
+* true / false ==> Htrue / Hfalse (skeleton)
+* seq ==> Hseq (basic functionality working)
+* cat ==> Hcat (multiple files and seperators working)
+* head ==> Hhead (line count)
 
 ### ToDo - Interesting: ###
-* users
-* true / false
+* users ==> skeleton
 * tr
 * shred
 * printf (prereq for many others)
@@ -31,10 +34,10 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * date
 
 ### ToDo - Easy: ###
-* seq / shuf / sort
+* shuf / sort
 * printenv / pwd / uptime / groups / hostid / hostname
 * uname / uname-arch / uname-uname
-* truncate / tail / head / cat
+* truncate / tail
 * touch
 * split
 * rm / rmdir / mv / mkdir / cp / chgrp / chmod / chown

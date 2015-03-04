@@ -8,7 +8,7 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args defaultYes
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
@@ -44,8 +44,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: YesOptions 
-defaultOptions = YesOptions "" False False
+defaultYes :: YesOptions 
+defaultYes = YesOptions "" False False
 
 data YesOptions = YesOptions { displayString :: String
                              , displayHelp :: Bool

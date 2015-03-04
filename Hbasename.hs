@@ -12,7 +12,7 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args defaultBasename
 
   runTermOutput term (termText (showError options))
   runTermOutput term (termText (showHelp options))
@@ -77,8 +77,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: BasenameOptions
-defaultOptions = BasenameOptions [] False False "" False False
+defaultBasename :: BasenameOptions
+defaultBasename = BasenameOptions [] False False "" False False
 
 data BasenameOptions = BasenameOptions { targets :: [String]
                                        , multipleInputs :: Bool

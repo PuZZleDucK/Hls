@@ -9,7 +9,7 @@ main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultOptions
+  let options = processArgs args defaultWhoami
 --  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
@@ -46,8 +46,8 @@ stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
-defaultOptions :: WhoamiOptions
-defaultOptions = WhoamiOptions False False
+defaultWhoami :: WhoamiOptions
+defaultWhoami = WhoamiOptions False False
 
 data WhoamiOptions = WhoamiOptions { displayHelp :: Bool
                                 , displayVersion :: Bool } deriving (Show, Eq)
