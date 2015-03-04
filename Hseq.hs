@@ -19,11 +19,12 @@ main = do
   return ()
 
 showOutput :: SeqOptions -> IO String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return (concat (intersperse "\n" (map show [sStart,(sStart+sInc)..sEnd])))
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return (concat (intersperse sep (map show [sStart,(sStart+sInc)..sEnd])))
                 | otherwise = return ""
   where sStart = if (seqStart opts) == (-1) then 1 else seqStart opts
         sEnd = if (seqEnd opts) == (-1) then 1 else seqEnd opts
         sInc = if (seqIncrement opts) == (-1) then 1 else seqIncrement opts
+        sep = displaySeperator opts
 
 
 showHelp :: SeqOptions -> String
@@ -39,12 +40,13 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
+  "-s" -> processArgs (drop 1 xs) opts{displaySeperator = head xs}
   x -> if (seqEnd opts) == (-1)
-    then processArgs xs opts{seqEnd = (read x)::Integer}
+    then processArgs xs opts{seqEnd = (read x)::Integer} --oh, needs a bit of tweaking: [E] [S E] [S I E]
     else if (seqStart opts) == (-1)
       then processArgs xs opts{seqEnd = (read x)::Integer, seqStart = (seqEnd opts)}
       else if (seqIncrement opts) == (-1)
-        then processArgs xs opts{seqIncrement = (read x)::Integer}
+        then processArgs xs opts{seqEnd = (read x)::Integer, seqIncrement = (seqEnd opts)}
         else processArgs xs opts
 
 stripQuotes :: String -> String
