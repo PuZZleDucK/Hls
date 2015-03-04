@@ -4,7 +4,7 @@ import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
 import Control.Monad
-import System.IO          --file handle handling
+import System.IO
 
 main :: IO ()
 main = do
@@ -21,8 +21,9 @@ main = do
 
 showOutput :: CatOptions -> IO String
 showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = do
-  handle <- openFile (head (targetFiles opts)) ReadMode 
-  hGetContents handle -- now do more than one file :p
+  handles <- sequence (map ((flip openFile) ReadMode) ((targetFiles opts)))
+  contents <- sequence (map hGetContents (handles))
+  return (concat contents)
                 | otherwise = return ""
 
 
