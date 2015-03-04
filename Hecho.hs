@@ -4,6 +4,7 @@ import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
 import Control.Monad
+import Text.Parsec
 
 main :: IO ()
 main = do
@@ -31,20 +32,21 @@ processEscapes (x:xs) = (processText x):(processEscapes xs)
 
 processText :: String -> String
 processText [] = []
-processText (c:cx) = if isEscape c then (escape (head cx)):(processText (drop 1 cx))
+processText (c:cx) = if isEscape c then (escape cx):(processText (drop 1 cx))
                                    else c:(processText cx)
 
-escape :: Char -> Char
-escape '\\' = '\\'
-escape 'a' = '\a'     -- alert (BEL)"
-escape 'b' = '\b'     -- backspace"
+escape :: [Char] -> Char
+escape text | head text == '\\' = '\\'
+escape text | head text == 'a' = '\a'     -- alert (BEL)"
+escape text | head text == 'b' = '\b'     -- backspace"
 --escape 'c' = '\'      produce no further output"
 --escape 'e' = '\'      escape"
-escape 'f' = '\f'     -- form feed"
-escape 'n' = '\n'
-escape 'r' = '\r'     -- carriage return"
-escape 't' = '\t'     -- horizontal tab"
-escape 'v' = '\v'     -- vertical tab"
+escape text | head text == 'f' = '\f'     -- form feed"
+escape text | head text == 'n' = '\n'
+escape text | head text == 'r' = '\r'     -- carriage return"
+escape text | head text == 't' = '\t'     -- horizontal tab"
+escape text | head text == 'v' = '\v'     -- vertical tab"
+--might be better to use parsec at this point
 --0NNN   byte with octal value NNN (1 to 3 digits)"
 --xHH    byte with hexadecimal value HH (1 to 2 digits)"
 escape _ = '#'
