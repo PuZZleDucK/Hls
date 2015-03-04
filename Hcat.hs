@@ -4,13 +4,14 @@ import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
 import Control.Monad
+import System.IO          --file handle handling
 
 main :: IO ()
 main = do
   term <- setupTermFromEnv
   args <- getArgs
   let options = processArgs args defaultOptions
---  runTermOutput term (termText ("Options: "++(show options)++"\n"))
+  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
@@ -19,7 +20,9 @@ main = do
   return ()
 
 showOutput :: CatOptions -> IO String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return "" -- <do-stuff-Here>
+showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = do
+  handle <- openFile (head (targetFiles opts)) ReadMode 
+  hGetContents handle -- now do more than one file :p
                 | otherwise = return ""
 
 
@@ -36,18 +39,26 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> processArgs xs opts
+  x -> processArgs xs opts{targetFiles = (targetFiles opts++[x])}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
 defaultOptions :: CatOptions
-defaultOptions = CatOptions False False
+defaultOptions = CatOptions False False [] False False False False False False
 
 data CatOptions = CatOptions
   { displayHelp :: Bool
-  , displayVersion :: Bool } deriving (Show, Eq)
+  , displayVersion :: Bool
+  , targetFiles :: [String]
+  , displayNonBlankCount :: Bool
+  , displayLineNumbers :: Bool
+  , displayLineTerminators :: Bool
+  , suppressMultipleBlank :: Bool
+  , displayVisibleTab :: Bool
+  , displayVisibleNonPrinting :: Bool
+  } deriving (Show, Eq)
 
 
 helpText :: [String]
