@@ -16,6 +16,7 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * seq ==> Hseq (basic functionality working)
 * cat ==> Hcat (multiple files and seperators working)
 * head ==> Hhead (line count)
+* printenv ==> Hprintenv
 
 ### ToDo - Interesting: ###
 * users ==> skeleton
@@ -35,7 +36,7 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 
 ### ToDo - Easy: ###
 * shuf / sort
-* printenv / pwd / uptime / groups / hostid / hostname
+* pwd / uptime / groups / hostid / hostname
 * uname / uname-arch / uname-uname
 * truncate / tail
 * touch
