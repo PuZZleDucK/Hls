@@ -3,7 +3,6 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
-import Control.Monad
 
 main :: IO ()
 main = do

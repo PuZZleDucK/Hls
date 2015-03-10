@@ -3,7 +3,6 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
-import Control.Monad
 --import Data.Text
 
 main :: IO ()
@@ -26,7 +25,7 @@ showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = do
 --  putStrLn (show env)
   return (concat env)
                 | otherwise = return ""
-  where tgts = targets opts
+  where _tgts = targets opts
 
 --needs more serious departure: don't print key-name when looking up individual variables.
 formatEnvironment :: PrintenvOptions -> IO [String]
@@ -50,7 +49,7 @@ processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
   "--null" -> processArgs xs opts{suppressNewline = True}
-  x -> processArgs xs opts{targets = (targets opts)++[x]}
+  z -> processArgs xs opts{targets = (targets opts)++[z]}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)

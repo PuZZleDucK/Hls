@@ -3,10 +3,9 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
-import Control.Monad
 import Text.Parsec hiding ((<|>), many)
-import Text.Parsec.String
-import Text.Parsec.Char
+--import Text.Parsec.String
+--import Text.Parsec.Char
 import Text.ParserCombinators.Parsec.Char
 import Numeric
 
@@ -58,14 +57,14 @@ escape _ = '#'
 
 -- usage: parse parseHex [] "x41stuff"
 parseHex :: CharParser () Char
-parseHex = do char 'x'
+parseHex = do _ <- char 'x'
               a <- hexDigit
               b <- hexDigit
               let ((d,_):_) = readHex [a,b]
               return . toEnum $ d
 
 parseOctal :: CharParser () Char
-parseOctal = do char '0'
+parseOctal = do _ <- char '0'
                 a <- octDigit
                 b <- octDigit
                 c <- octDigit
@@ -91,7 +90,7 @@ processArgs (x:xs) opts = case x of
   "-n" -> processArgs xs opts{suppressNewline = True}
   "-e" -> processArgs xs opts{enableEscapeSequences = True}
   "-E" -> processArgs xs opts{enableEscapeSequences = False}
-  x -> processArgs xs opts{echoText = (echoText opts)++[x]}
+  z -> processArgs xs opts{echoText = (echoText opts)++[z]}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
