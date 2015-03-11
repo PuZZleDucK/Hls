@@ -3,6 +3,7 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
+import Control.Monad
 import System.IO
 
 main :: IO ()
@@ -28,8 +29,8 @@ showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = do
 --lineCount is screwey for some reason
 
 hGetLines :: Integer -> Handle -> IO [String] --single line only.
-hGetLines _count file = do contents <- hGetLine file
-                           return [contents]
+hGetLines count file = do contents <- hGetLine file
+                          return [contents]
 
 showHelp :: HeadOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
@@ -48,7 +49,7 @@ processArgs (x:xs) opts = case x of
   "-c" -> processArgs (drop 1 xs) opts{countBytes = (read (head xs))::Integer}
   "-q" -> processArgs xs opts{suppressHeaders = True}
   "-v" -> processArgs xs opts{displayHeaders = True}
-  z -> processArgs xs opts{targetFiles = (targetFiles opts++[z])}
+  x -> processArgs xs opts{targetFiles = (targetFiles opts++[x])}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)

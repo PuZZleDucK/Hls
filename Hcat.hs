@@ -3,6 +3,7 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
+import Control.Monad
 import System.IO
 
 main :: IO ()
@@ -39,7 +40,7 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  z -> processArgs xs opts{targetFiles = (targetFiles opts++[z])}
+  x -> processArgs xs opts{targetFiles = (targetFiles opts++[x])}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)

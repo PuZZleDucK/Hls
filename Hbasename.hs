@@ -1,10 +1,12 @@
--- Hbasename, haskell implementation of GNU basename.
+-- Lets try something a little less ambitious, like basename.
 module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
 import System.FilePath
-import Data.Text (stripSuffix, pack, splitOn, dropAround)
+import Data.Text (stripSuffix, pack, dropWhile, splitOn, dropAround) -- pack to make text
+import Data.Maybe
+import Control.Monad
 
 main :: IO ()
 main = do
@@ -26,6 +28,7 @@ showOutput opts | doOutput = concat (intersperse interChar (formatOutput (target
         doOutput = not ((displayHelp opts) || (displayVersion opts))
 
 
+-- Data.List.last (Data.Text.splitOn (pack (pathSeparator:[])) (pack "this/that/other"))
 formatOutput :: [String] -> BasenameOptions -> [String]
 formatOutput [] _ = []
 formatOutput (x:xs) opts =  ((stripQuotes) finalText):(formatOutput xs opts)
@@ -37,7 +40,7 @@ formatOutput (x:xs) opts =  ((stripQuotes) finalText):(formatOutput xs opts)
 
 stripSuffixIfThere :: String -> String -> String
 stripSuffixIfThere suff str = case (stripSuffix (pack suff) (pack str)) of Nothing -> str
-                                                                           Just x -> show (dropAround (\z -> z=='"') (x))
+                                                                           Just x -> show (dropAround (\x -> x=='"') (x))
 
 showError :: BasenameOptions -> String
 showError opts | (null (targets opts)) = concat (intersperse "\n" errorTest)
@@ -79,7 +82,7 @@ defaultBasename = BasenameOptions [] False False "" False False
 
 data BasenameOptions = BasenameOptions { targets :: [String]
                                        , multipleInputs :: Bool
-                                       , suppressNewline :: Bool
+                                       , suppressNewline :: Bool --zero
                                        , removeSuffix :: String
                                        , displayVersion :: Bool
                                        , displayHelp :: Bool } deriving (Show, Eq)
@@ -115,7 +118,6 @@ versionText = [ "Hbasename (Haskell implementation of GNU basename) 1.0"
               , "Ported by PuZZleDucK.\n"
               ]
 
-errorTest :: [String]
 errorTest = [ "basename: missing operand"
             , "Try `basename --help' for more information.\n"
             ]

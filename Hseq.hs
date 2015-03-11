@@ -3,6 +3,7 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
+import Control.Monad
 
 main :: IO ()
 main = do
@@ -40,12 +41,12 @@ processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
   "-s" -> processArgs (drop 1 xs) opts{displaySeperator = head xs}
-  z -> if (seqEnd opts) == (-1)
-    then processArgs xs opts{seqEnd = (read z)::Integer} --oh, needs a bit of tweaking: [E] [S E] [S I E]
+  x -> if (seqEnd opts) == (-1)
+    then processArgs xs opts{seqEnd = (read x)::Integer} --oh, needs a bit of tweaking: [E] [S E] [S I E]
     else if (seqStart opts) == (-1)
-      then processArgs xs opts{seqEnd = (read z)::Integer, seqStart = (seqEnd opts)}
+      then processArgs xs opts{seqEnd = (read x)::Integer, seqStart = (seqEnd opts)}
       else if (seqIncrement opts) == (-1)
-        then processArgs xs opts{seqEnd = (read z)::Integer, seqIncrement = (seqEnd opts)}
+        then processArgs xs opts{seqEnd = (read x)::Integer, seqIncrement = (seqEnd opts)}
         else processArgs xs opts
 
 stripQuotes :: String -> String
