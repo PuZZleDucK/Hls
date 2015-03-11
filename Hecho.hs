@@ -102,7 +102,7 @@ parseThisLongOption :: EchoOptions -> String -> EchoOptions
 parseThisLongOption opts str = (effect (head (filter (\x -> (longTag x)==str) echoFlags))) opts
 
 parseTargetOption :: EchoOptions -> String -> EchoOptions
-parseTargetOption str = 
+parseTargetOption opts str = opts{echoText = (echoText opts)++[str]}
 
 
 --data CommandFlags = CF { commandDescription :: String
