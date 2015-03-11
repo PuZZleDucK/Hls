@@ -3,11 +3,11 @@ module Main where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
-import Control.Monad
-import Text.Parsec hiding ((<|>), many)
-import Text.Parsec.String
-import Text.Parsec.Char
-import Text.ParserCombinators.Parsec.Char
+import Text.Parsec hiding ((<|>), many, try)
+import Text.ParserCombinators.Parsec
+--import Text.Parsec.String
+--import Text.Parsec.Char
+import Text.ParserCombinators.Parsec.Char()
 import Numeric
 
 main :: IO ()
@@ -41,15 +41,15 @@ processText (c:cx) = if isEscape c then (escape cx):(processText (drop 1 cx))
 
 escape :: [Char] -> Char
 escape text | head text == '\\' = '\\'
-escape text | head text == 'a' = '\a'     -- alert (BEL)"
-escape text | head text == 'b' = '\b'     -- backspace"
+            | head text == 'a' = '\a'     -- alert (BEL)"
+            | head text == 'b' = '\b'     -- backspace"
 --escape 'c' = '\'      produce no further output"
 --escape 'e' = '\'      escape"
-escape text | head text == 'f' = '\f'     -- form feed"
-escape text | head text == 'n' = '\n'
-escape text | head text == 'r' = '\r'     -- carriage return"
-escape text | head text == 't' = '\t'     -- horizontal tab"
-escape text | head text == 'v' = '\v'     -- vertical tab"
+            | head text == 'f' = '\f'     -- form feed"
+            | head text == 'n' = '\n'
+            | head text == 'r' = '\r'     -- carriage return"
+            | head text == 't' = '\t'     -- horizontal tab"
+            | head text == 'v' = '\v'     -- vertical tab"
 --might be better to use parsec at this point
 --0NNN   byte with octal value NNN (1 to 3 digits)"
 --xHH    byte with hexadecimal value HH (1 to 2 digits)"
@@ -57,20 +57,62 @@ escape _ = '#'
 
 
 -- usage: parse parseHex [] "x41stuff"
-parseHex :: CharParser () Char
-parseHex = do char 'x'
+parseHex :: Parser Char
+parseHex = do _ <- char 'x'
               a <- hexDigit
               b <- hexDigit
-              let ((d,_):_) = readHex [a,b]
+--              let ((d,_):_) = readHex [a,b]
+              let d = fst (head (readHex [a,b]))
               return . toEnum $ d
 
 parseOctal :: CharParser () Char
-parseOctal = do char '0'
+parseOctal = do _ <- char '0'
                 a <- octDigit
                 b <- octDigit
                 c <- octDigit
-                let ((d,_):_) = readOct [a,b,c]
+--                let ((d,_):_) = readOct [a,b,c]
+                let d = fst (head (readOct [a,b,c]))
                 return . toEnum $ d
+
+parseShortMarker :: Parser ()
+parseShortMarker = do _ <- char '-'
+                      return ()
+
+parseLongMarker :: Parser ()
+parseLongMarker = do _ <- char '-'
+                     _ <- char '-'
+                     return ()
+
+--parseMarker :: Parser ()
+--parseMarker = do try parseLongMarker <|> parseShortMarker
+
+parseShortOption :: EchoOptions -> Parser EchoOptions
+parseShortOption opts = do parseShortMarker
+                           next <- anyChar
+                           case next of
+                             'n' -> return opts{suppressNewline = True}
+                             'e' -> return opts{enableEscapeSequences = True}
+                             'E' -> return opts{enableEscapeSequences = False}
+                             _ -> return opts
+
+parseThisShortOption :: EchoOptions -> Char -> EchoOptions
+parseThisShortOption opts char = (effect (head (filter (\x -> (shortTag x)==char) echoFlags))) opts
+
+parseThisLongOption :: EchoOptions -> String -> EchoOptions
+parseThisLongOption opts str = (effect (head (filter (\x -> (longTag x)==str) echoFlags))) opts
+
+parseTargetOption :: EchoOptions -> String -> EchoOptions
+parseTargetOption str = 
+
+
+--data CommandFlags = CF { commandDescription :: String
+--                                 , shortTag :: Char
+--                                 , longTag :: String
+--                                 , effect :: (EchoOptions -> EchoOptions)
+--                                 }
+
+
+
 
 isEscape :: Char -> Bool
 isEscape c = if c == '\\' then True else False
@@ -91,7 +133,7 @@ processArgs (x:xs) opts = case x of
   "-n" -> processArgs xs opts{suppressNewline = True}
   "-e" -> processArgs xs opts{enableEscapeSequences = True}
   "-E" -> processArgs xs opts{enableEscapeSequences = False}
-  x -> processArgs xs opts{echoText = (echoText opts)++[x]}
+  z -> processArgs xs opts{echoText = (echoText opts)++[z]}
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
@@ -107,16 +149,39 @@ data EchoOptions = EchoOptions
   , enableEscapeSequences :: Bool
   , echoText :: [String] } deriving (Show, Eq)
 
+data CommandFlags = CF { commandDescription :: String
+                                 , shortTag :: Char
+                                 , longTag :: String
+                                 , effect :: (EchoOptions -> EchoOptions)
+                                 }
+instance Show CommandFlags where
+  show (CF desc '\0' long _effect) = "--"++ long ++"  "++ desc
+  show (CF desc short "" _effect) = "-"++(short:[]) ++"  "++ desc
+  show (CF desc short long _effect) = "-"++(short:[]) ++" --"++ long ++"  "++ desc
+
+echoFlags :: [CommandFlags]
+echoFlags = [ (CF "do not output the trailing newline"
+                  'n' ""
+                  (\x -> x{suppressNewline = True}))
+            , (CF "enable interpretation of backslash escapes"
+                  'e' ""
+                  (\x -> x{enableEscapeSequences = True}))
+            , (CF "disable interpretation of backslash escapes (default)"
+                  'E' ""
+                  (\x -> x{enableEscapeSequences = False}))
+            , (CF "display this help and exit"
+                  '\0' "help"
+                  (\x -> x{displayHelp = True}))
+            , (CF "output version information and exit"
+                  '\0' "version"
+                  (\x -> x{displayVersion = True}))
+            ]
 
 helpText :: [String]
 helpText = [ "Usage: ./src/echo [SHORT-OPTION]... [STRING]..."
            , "  or:  ./src/echo LONG-OPTION"
            , "Echo the STRING(s) to standard output."
-           , "  -n do not output the trailing newline"
-           , "  -e             enable interpretation of backslash escapes"
-           , "  -E             disable interpretation of backslash escapes (default)"
-           , "      --help display this help and exit"
-           , "      --version output version information and exit"
+           , foldr (\x y -> ("    "++(show x)++"\n") ++ y) "" echoFlags
            , "If -e is in effect, the following sequences are recognised:"
            , "  \\\\      backslash"
            , "  \\a      alert (BEL)"
