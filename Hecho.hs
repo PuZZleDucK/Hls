@@ -84,7 +84,10 @@ parseLongMarker = do _ <- char '-'
                      return ()
 
 --parseMarker :: Parser ()
---parseMarker = do try parseLongMarker <|> parseShortMarker
+--parseMarker = do try parseLongMarker <|> 
+--                 try parseShortMarker <|>
+--                 parseTarget
+
 
 parseShortOption :: EchoOptions -> Parser EchoOptions
 parseShortOption opts = do parseShortMarker
@@ -95,14 +98,14 @@ parseShortOption opts = do parseShortMarker
                              'E' -> return opts{enableEscapeSequences = False}
                              _ -> return opts
 
-parseThisShortOption :: EchoOptions -> Char -> EchoOptions
-parseThisShortOption opts char = (effect (head (filter (\x -> (shortTag x)==char) echoFlags))) opts
+parseThisShortOption :: EchoOptions -> Char -> Parser EchoOptions
+parseThisShortOption opts ch = return ( opts{effect = (head (filter (\x -> (shortTag x)==ch) echoFlags))}) 
 
-parseThisLongOption :: EchoOptions -> String -> EchoOptions
-parseThisLongOption opts str = (effect (head (filter (\x -> (longTag x)==str) echoFlags))) opts
+--parseThisLongOption :: EchoOptions -> String -> EchoOptions
+--parseThisLongOption opts str = (effect (head (filter (\x -> (longTag x)==str) echoFlags))) opts
 
-parseTargetOption :: EchoOptions -> String -> EchoOptions
-parseTargetOption opts str = opts{echoText = (echoText opts)++[str]}
+parseTargetOption :: EchoOptions -> String -> Parser EchoOptions
+parseTargetOption opts str = return (opts{echoText = (echoText opts)++[str]})
 
 
 --data CommandFlags = CF { commandDescription :: String
@@ -163,18 +166,23 @@ echoFlags :: [CommandFlags]
 echoFlags = [ (CF "do not output the trailing newline"
                   'n' ""
                   (\x -> x{suppressNewline = True}))
+--                  parseTargetOption)
             , (CF "enable interpretation of backslash escapes"
                   'e' ""
-                  (\x -> x{enableEscapeSequences = True}))
+--                  (\x -> x{enableEscapeSequences = True}))
+                  undefined)
             , (CF "disable interpretation of backslash escapes (default)"
                   'E' ""
-                  (\x -> x{enableEscapeSequences = False}))
+--                  (\x -> x{enableEscapeSequences = False}))
+                  undefined)
             , (CF "display this help and exit"
                   '\0' "help"
-                  (\x -> x{displayHelp = True}))
+--                  (\x -> x{displayHelp = True}))
+                  undefined)
             , (CF "output version information and exit"
                   '\0' "version"
-                  (\x -> x{displayVersion = True}))
+--                  (\x -> x{displayVersion = True}))
+                  undefined)
             ]
 
 helpText :: [String]
