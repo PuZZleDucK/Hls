@@ -35,7 +35,9 @@ processArgs [] opts = opts
 processArgs (x:xs) opts = case x of
   "--help" -> processArgs xs opts{displayHelp = True}
   "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> processArgs xs opts
+  "--" -> opts --GNU extension, terminate option parsing, still need to parse targets
+  _ -> processArgs xs opts -- if POSIXLY_CORRECT: processTargets xs opts
+                           -- as POSIX terminates option processing after the first target
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
