@@ -42,12 +42,41 @@ stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
 stripQuotes xs = xs
 
 defaultSort :: SortOptions
-defaultSort = SortOptions False False
+defaultSort = SortOptions False False "" "" [] "" 0 False False False False [] False "" False 0 "" [] 1 False False
 
 data SortOptions = SortOptions
   { displayHelp :: Bool
-  , displayVersion :: Bool } deriving (Show, Eq)
+  , displayVersion :: Bool
+  , sortText :: String
+  , sortTargets :: String
+  , ordering :: [SortOrderingOptions]
+  , randomSource :: String
+  , batchSize :: Integer
+  , checkSorting :: Bool
+  , compressTemporary :: Bool
+  , debugMode :: Bool
+  , quietMode :: Bool
+  , sortKey :: [KeyDef]
+  , onlyMerge :: Bool
+  , outputFile :: String
+  , stabilizeSort :: Bool
+  , bufferSize :: Integer
+  , fieldSeperator :: String
+  , tempDirectories :: [String]
+  , concurrencyLevel :: Integer
+  , uniqueEntriesOnly :: Bool
+  , nullTerminated :: Bool
+  } deriving (Show, Eq)
 
+data SortOrderingOptions = IgnoreLeadingBlanks | DictionarySorting | IgnoreCase | GeneralNumericSorting | IgnoreUnprintable | MonthSorting | HumanNumericSorting | NumericSorting | RandomSorting | ReverseOrdering | VersionSorting deriving (Show, Eq)
+
+data KeyDef = KeyDef{ fieldNumber :: Integer, characterOffset :: Integer, sortOptions :: [SortOrderingOptions]} deriving (Show, Eq)
+--KEYDEF is F[.C][OPTS][,F[.C][OPTS]] for start and stop position, where F is a field number and C a character position in the field; both are origin 1, and the stop position defaults to the line's end
+
+--OPTS is one or more single-letter ordering options [bdfgiMhnRrV], which override global ordering options for that key
+
+
+--SIZE: b 1, K 1024 (default), and so on for M, G, T, P, E, Z, Y.
 
 helpText :: [String]
 helpText = [ "Usage: /home/bminerds/x/coreutils/src/sort [OPTION]... [FILE]..."
