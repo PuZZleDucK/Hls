@@ -12,23 +12,23 @@ main = do
   args <- getArgs
   let options = processArgs pwdFlags args defaultPwd
 
-  runTermOutput term (termText (showHelp options))
-  runTermOutput term (termText (showVersion options))
+--  runTermOutput term (termText (showHelp options))
+--  runTermOutput term (termText (showVersion options))
   output <- showOutput options
   runTermOutput term (termText (output))
   runTermOutput term (termText ("Options: "++(stripQuotes (show options))++"\n"))
   return ()
 
 showOutput :: PwdOptions -> IO String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return "" -- <do-stuff-Here>
-                | otherwise = return ""
+showOutput opts  = return "" -- <do-stuff-Here>
+--                | otherwise = return ""
 
 
-showHelp :: PwdOptions -> String
+showHelp :: DefaultOptions -> String
 showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
               | otherwise = ""
 
-showVersion :: PwdOptions -> String
+showVersion :: DefaultOptions -> String
 showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
                  | otherwise = ""
 
@@ -66,7 +66,7 @@ showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
 
 
 defaultPwd :: PwdOptions
-defaultPwd = PwdOptions False False True []
+defaultPwd = PwdOptions True
 
 
 --newtype DefaultOptions = PwdOptions
@@ -74,13 +74,16 @@ defaultPwd = PwdOptions False False True []
 --  others :: a
 
 data PwdOptions = PwdOptions
-  { displayHelp :: Bool
-  , displayVersion :: Bool
-  , resolveSymlinks :: Bool
-  , targets :: [String] } deriving (Show, Eq)
+  { --displayHelp :: Bool
+  --, displayVersion :: Bool
+   resolveSymlinks :: Bool
+  --, targets :: [String]
+  } deriving (Show, Eq)
 
-pwdFlags :: [OptionFlags PwdOptions]
-pwdFlags = 
+
+
+defaultFlags :: [OptionFlags DefaultOptions]
+defaultFlags = 
   [ (OF ""
         '\0' ""
         (\x -> x{targets = (targets x)}))
@@ -90,7 +93,11 @@ pwdFlags =
   , (OF "output version information and exit"
         '\0' "version"
         (\x -> x{displayVersion = True}))
-  , (OF "use PWD from environment, even if it contains symlinks"
+  ]
+
+pwdFlags :: [OptionFlags PwdOptions]
+pwdFlags = 
+  [ (OF "use PWD from environment, even if it contains symlinks"
         'L' "logical"
         (\x -> x{resolveSymlinks = False}))
   , (OF "avoid all symlinks"

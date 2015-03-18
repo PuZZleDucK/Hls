@@ -5,6 +5,12 @@ import System.Console.Terminfo.Base
 import Data.List
 
 
+data DefaultOptions = DefaultOptions
+  { displayHelp :: Bool
+  , displayVersion :: Bool
+  , targets :: [String]
+  } deriving (Show, Eq)
+
 
 stripQuotes :: String -> String
 stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
@@ -19,10 +25,10 @@ flagChars = ['-','+']
 
 
 data OptionFlags x = OF { description :: String
-                        , shortTag :: Char
-                        , longTag :: String
-                        , effect :: x -> x --options modifier
-                        }
+                         , shortTag :: Char
+                         , longTag :: String
+                         , effect :: x -> x --options modifier
+                         }
 
 instance Show (OptionFlags x) where
   show (OF desc '\0' long _effect) = "--"++ long ++"  "++ desc
@@ -54,6 +60,8 @@ processArgs flags [] opts = opts
 --processArgs NoOpts remaining opts = opts{targets=(targets opts) ++ remaining}
 processArgs flags ((c:rst):others) opts | c == '-' = processShorts flags (rst:others) opts
                                         | otherwise = processArgs flags others opts --targets is not visible here!!! {targets = (targets opts)++[(c:rst)]}
+
+
 
 
 
