@@ -20,29 +20,39 @@ data OptionToken = OT String OptionParamater | TargetToken String
 --data Arguments = [OptionToken]
 --data TargetToken = 
 
-data ProgramOption = ProgramOption {
+data ProgramOption a = ProgramOption {
   optionText :: String
 , optionShortFlags :: [String]
 , optionLongFlags :: [String]
 , optionParamaters :: [String]
 , optionEffect :: ProgramData -> ProgramData
+, optionValue :: a
 }
 
-defaultOptions :: [ProgramOption]
-defaultOptions = [ (ProgramOption "" [] ["help"] [] (\x->x))
-                 , (ProgramOption "" [] ["version"] [] (\x->x))
+helpOption :: ProgramOption Bool
+helpOption = ProgramOption "" [] [] [] (\x->x) True
+
+defaultOptions :: [ProgramOption Bool]
+defaultOptions = [ (ProgramOption "" [] ["help"] [] (\x->x) False)
+                 , (ProgramOption "" [] ["version"] [] (\x->x) False)
                  ]
 
+data ConfigurationData = ConfigurationData {
+  boolData :: [ProgramOption Bool]
+, stringData :: [ProgramOption String]
+, integerData :: [ProgramOption Integer]
+, floatData :: [ProgramOption Float]
+}
 
 data ProgramData = ProgramData {
   appName :: String
 , appHelp :: String
 , appVersion :: String
 , argumentStrings :: [String]
-, argumentTokens :: [OptionToken]
-, configuration :: [ProgramOption]
-, longParser :: ProgramData -> String -> ProgramData
-, shortParser :: ProgramData -> String -> ProgramData
+--, argumentTokens :: [OptionToken]
+, configuration :: ConfigurationData
+, longParser :: ConfigurationData -> String -> ConfigurationData
+, shortParser :: ConfigurationData -> String -> ConfigurationData
 }
 
 
@@ -57,21 +67,28 @@ parseArgument dat (marker1:marker2:rest) = if marker1 == optionDelimiter
   then if marker2 == optionDelimiter
     then parseLongOption dat rest
     else parseShortOption dat (marker2:rest)
-  else dat{argumentTokens = (argumentTokens dat)++[TargetToken (marker1:marker2:rest)]}
+  else dat  -- {argumentTokens = (argumentTokens dat)++[TargetToken (marker1:marker2:rest)]}
 
 --check for --help --version and -- here
 parseLongOption :: ProgramData -> String -> ProgramData
 parseLongOption dat [] = dat
-parseLongOption dat long = (longParser dat) dat long
+--parseLongOption dat "help" = dat{configuration=((configuration dat){boolData=(boolData (configuration dat))++[]})}
+parseLongOption dat "help" = addOption dat True helpOption
+parseLongOption dat long = dat{configuration=(configParser long)}
+  where oldConfig = configuration dat
+        configParser = (longParser dat) oldConfig
 
 parseShortOption :: ProgramData -> String -> ProgramData
 parseShortOption dat [] = dat
-parseShortOption dat shorts = (shortParser dat) dat shorts
+parseShortOption dat shorts = dat{configuration=(configParser shorts)}
+  where oldConfig = configuration dat
+        configParser = (shortParser dat) oldConfig
 
 
 
-
-
+-- this is where it's at now
+addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
+addOption dat x opt = dat
 
 
 

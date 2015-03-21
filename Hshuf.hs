@@ -37,8 +37,8 @@ main = do
   , appHelp = shufAppHelp
   , appVersion = shufAppVersion
   , argumentStrings = args
-  , argumentTokens = []
-  , configuration = []
+--  , argumentTokens = []
+  , configuration = ConfigurationData [] [] [] []
   , longParser = shufLongParser
   , shortParser = shufShortParser
   }
@@ -54,11 +54,11 @@ main = do
 
 
 
-shufLongParser :: ProgramData -> String -> ProgramData
+shufLongParser :: ConfigurationData -> String -> ConfigurationData
 shufLongParser dat [] = dat
 shufLongParser dat "shufflag" = dat
 
-shufShortParser :: ProgramData -> String -> ProgramData
+shufShortParser :: ConfigurationData -> String -> ConfigurationData
 shufShortParser = (\x y -> x)
 
 shufAppName = "Hshuf"
