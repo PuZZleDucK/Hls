@@ -22,6 +22,31 @@ flagPrefixes = ["-","--","+"]
 flagChars :: [Char]
 flagChars = ['-','+']
 
+defaultFlags :: [OptionFlags DefaultOptions]
+defaultFlags = 
+  [ (OF ""
+        '\0' ""
+        (\x -> x{targets = (targets x)}))
+  , (OF "display this help and exit"
+        '\0' "help"
+        (\x -> x{displayHelp = True}))
+  , (OF "output version information and exit"
+        '\0' "version"
+        (\x -> x{displayVersion = True}))
+  ]
+
+
+--allGnuFlags :: [OptionFlags GnuOption]
+--allGnuFlags = [ 
+--    (OF "" '\0' "" (\x -> case x of
+--    GO (Left opts) -> GO (Left opts{targets = (targets opts)})
+--  ))
+--  , (OF "" '\0' "" (\x -> case x of
+--    GO (Right opts) -> GO (Right opts{resolveSymlinks = False})
+--  ))
+--  ]
+
+
 
 
 data OptionFlags x = OF { description :: String

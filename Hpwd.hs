@@ -12,8 +12,8 @@ main = do
   args <- getArgs
   let options = processArgs pwdFlags args defaultPwd
 
---  runTermOutput term (termText (showHelp options))
---  runTermOutput term (termText (showVersion options))
+  runTermOutput term (termText (showHelp defaultDefault))
+  runTermOutput term (termText (showVersion defaultDefault))
   output <- showOutput options
   runTermOutput term (termText (output))
   runTermOutput term (termText ("Options: "++(stripQuotes (show options))++"\n"))
@@ -32,42 +32,12 @@ showVersion :: DefaultOptions -> String
 showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
                  | otherwise = ""
 
---data ProcessingState = Normal | LongOpt | ShortOpt | NoOpts
-
-
-
-
-
-
-
-
-
---processArgs (x:xs) opts = case x of
---  "--help" -> processArgs xs opts{displayHelp = True}
---  "--version" -> processArgs xs opts{displayVersion = True}
---  "--" -> opts --GNU extension, terminate option parsing, still need to parse targets
---  _ -> processArgs xs opts -- if POSIXLY_CORRECT: processTargets xs opts
---                           -- as POSIX terminates option processing after the first target
---processArgs (x:xs) opts = if thisOption == "" then processArgs xs opts -- no targets
---                                              else (effect (getOptionFlag x)) opts
---  where thisOption = getOption x
-
---getOption :: String -> String -- "" means target/not-option
---getOption [] = ""
---getOption (x:[]) = ""
---getOption (x:y:[]) = ""
---getOption str = if head str /= '-' then ""
---                                   else if head ((drop 1) str) == '-' then (drop 2) str
---                                                                      else (drop 1) str
-
---getOptionFlag :: String -> OptionFlags
---getOptionFlag (ch:[]) = head (filter (\x -> (shortTag x == ch)) pwdFlags)
---getOptionFlag str = head (filter (\x -> (longTag x == str)) pwdFlags)
 
 
 defaultPwd :: PwdOptions
 defaultPwd = PwdOptions True
-
+defaultDefault :: DefaultOptions
+defaultDefault = DefaultOptions False False []
 
 --newtype DefaultOptions = PwdOptions
 --  help :: a
@@ -81,18 +51,22 @@ data PwdOptions = PwdOptions
   } deriving (Show, Eq)
 
 
+data GnuOption = GO (Either DefaultOptions PwdOptions)
 
-defaultFlags :: [OptionFlags DefaultOptions]
-defaultFlags = 
-  [ (OF ""
-        '\0' ""
-        (\x -> x{targets = (targets x)}))
-  , (OF "display this help and exit"
-        '\0' "help"
-        (\x -> x{displayHelp = True}))
-  , (OF "output version information and exit"
-        '\0' "version"
-        (\x -> x{displayVersion = True}))
+genericizeDefault :: DefaultOptions -> GnuOption
+genericizeDefault (DefaultOptions b1 b2 lst) = GO (Left (DefaultOptions b1 b2 lst))
+
+genericizeCustom :: PwdOptions -> GnuOption
+genericizeCustom (PwdOptions b1) = GO (Right (PwdOptions b1))
+
+allFlags :: [OptionFlags GnuOption]
+allFlags = [ 
+    (OF "" '\0' "" (\x -> case x of
+    GO (Left opts) -> GO (Left opts{targets = (targets opts)})
+  ))
+  , (OF "" '\0' "" (\x -> case x of
+    GO (Right opts) -> GO (Right opts{resolveSymlinks = False})
+  ))
   ]
 
 pwdFlags :: [OptionFlags PwdOptions]
