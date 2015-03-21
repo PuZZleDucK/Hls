@@ -11,12 +11,16 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * basename ==> Hbasename (done)
 * ls ==> Hls (work in progress, needs to work on real IO, colors, formats...)
 * uniq ==> Huniq (Started, lots to do, almost all, need repl loop)
-* echo ==> Hecho (mostly working)
+	* echo ==> Hecho (mostly working)
 * true / false ==> Htrue / Hfalse (skeleton)
 * seq ==> Hseq (basic functionality working)
 * cat ==> Hcat (multiple files and seperators working)
 * head ==> Hhead (line count)
 * printenv ==> Hprintenv
+* pwd ==> Hpwd (Started, but will need redo)
+* sort ==> Hsort (Options and text)
+* touch ==> Htouch (Options and text)
+* shuf ==> Hshuf (Started, argument redo)
 
 ### ToDo - Interesting: ###
 * users ==> skeleton
@@ -35,11 +39,10 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * date
 
 ### ToDo - Easy: ###
-* shuf / sort
-* pwd / uptime / groups / hostid / hostname
+* 
+* uptime / groups / hostid / hostname
 * uname / uname-arch / uname-uname
 * truncate / tail
-* touch
 * split
 * rm / rmdir / mv / mkdir / cp / chgrp / chmod / chown
 * nice
