@@ -1,8 +1,78 @@
 -- GnUtils, utils for a haskell implementation of GNU core-utils.
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 module GnUtils where
 import System.Environment
 import System.Console.Terminfo.Base
 import Data.List
+
+
+
+
+optionDelimiter = '-'
+optionTerminator = "--"
+paramaterDelimiter = "="
+optionParamaterDelimiter = ":"
+
+
+
+data OptionParamater = OP (Either () String)
+data OptionToken = OT String OptionParamater | TargetToken String
+--data Arguments = [OptionToken]
+--data TargetToken = 
+
+data ProgramOption = ProgramOption {
+  optionText :: String
+, optionShortFlags :: [String]
+, optionLongFlags :: [String]
+, optionParamaters :: [String]
+, optionEffect :: ProgramData -> ProgramData
+}
+
+defaultOptions :: [ProgramOption]
+defaultOptions = [ (ProgramOption "" [] ["help"] [] (\x->x))
+                 , (ProgramOption "" [] ["version"] [] (\x->x))
+                 ]
+
+
+data ProgramData = ProgramData {
+  appName :: String
+, appHelp :: String
+, appVersion :: String
+, argumentStrings :: [String]
+, argumentTokens :: [OptionToken]
+, configuration :: [ProgramOption]
+, longParser :: ProgramData -> String -> ProgramData
+, shortParser :: ProgramData -> String -> ProgramData
+}
+
+
+parseArguments :: ProgramData -> [String] -> ProgramData
+parseArguments dat [] = dat
+parseArguments dat (arg:args) = parseArguments dat args
+
+
+parseArgument :: ProgramData -> String -> ProgramData
+parseArgument dat [] = dat
+parseArgument dat (marker1:marker2:rest) = if marker1 == optionDelimiter
+  then if marker2 == optionDelimiter
+    then parseLongOption dat rest
+    else parseShortOption dat (marker2:rest)
+  else dat{argumentTokens = (argumentTokens dat)++[TargetToken (marker1:marker2:rest)]}
+
+--check for --help --version and -- here
+parseLongOption :: ProgramData -> String -> ProgramData
+parseLongOption dat [] = dat
+parseLongOption dat long = (longParser dat) dat long
+
+parseShortOption :: ProgramData -> String -> ProgramData
+parseShortOption dat [] = dat
+parseShortOption dat shorts = (shortParser dat) dat shorts
+
+
+
+
+
+
 
 
 data DefaultOptions = DefaultOptions
