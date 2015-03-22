@@ -25,7 +25,7 @@ data ProgramOption a = ProgramOption {
 , optionShortFlags :: [String]
 , optionLongFlags :: [String]
 , optionParamaters :: [String]
-, optionEffect :: ProgramData -> ProgramData
+, optionEffect :: ConfigurationData -> ConfigurationData
 , optionValue :: a
 }
 
@@ -86,9 +86,9 @@ parseShortOption dat shorts = dat{configuration=(configParser shorts)}
 
 
 
--- this is where it's at now
 addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
-addOption dat x opt = dat
+addOption dat x opt = dat{configuration = thisEffect (configuration dat)}
+  where thisEffect = optionEffect opt
 
 
 
