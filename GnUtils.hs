@@ -15,8 +15,8 @@ optionParamaterDelimiter = ":"
 
 
 
-data OptionParamater = OP (Either () String)
-data OptionToken = OT String OptionParamater | TargetToken String
+data OptionParamater = OP (Either () String) deriving (Eq, Show)
+data OptionToken = OT String OptionParamater | TargetToken String deriving (Eq, Show)
 --data Arguments = [OptionToken]
 --data TargetToken = 
 
@@ -28,6 +28,14 @@ data ProgramOption a = ProgramOption {
 , optionEffect :: ConfigurationData -> ConfigurationData
 , optionValue :: a
 }
+
+instance Show (ProgramOption a) where
+  show (ProgramOption txt shrt lng param eff val) = ""
+
+
+
+
+
 
 helpOption :: ProgramOption Bool
 helpOption = ProgramOption "" [] [] [] (\x->x) True
@@ -42,7 +50,7 @@ data ConfigurationData = ConfigurationData {
 , stringData :: [ProgramOption String]
 , integerData :: [ProgramOption Integer]
 , floatData :: [ProgramOption Float]
-}
+} deriving (Show)
 
 data ProgramData = ProgramData {
   appName :: String
@@ -54,6 +62,12 @@ data ProgramData = ProgramData {
 , longParser :: ConfigurationData -> String -> ConfigurationData
 , shortParser :: ConfigurationData -> String -> ConfigurationData
 }
+
+instance Show (ProgramData) where
+  show (ProgramData nam hlp ver args cfg lpars spars) = ""
+
+
+
 
 
 parseArguments :: ProgramData -> [String] -> ProgramData
