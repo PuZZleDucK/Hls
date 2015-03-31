@@ -8,6 +8,22 @@ import Data.List
 
 
 
+doHelp :: ProgramData -> Bool
+doHelp (ProgramData nam hlp ver args (ConfigurationData b s i f) lpars spars) = optionValue thisOpt -- True -- thisOpt
+  where thisOpt = (head (fst (partition (\x -> "h" `elem` optionShortFlags x) b)))
+
+getHelp :: ProgramData -> String
+getHelp (ProgramData nam hlp ver args cfg lpars spars) = fst hlp ++ "<options go here>" ++ snd hlp
+
+doVersion :: ProgramData -> Bool
+doVersion (ProgramData nam hlp ver args (ConfigurationData b s i f) lpars spars) = optionValue thisOpt -- True -- thisOpt
+  where thisOpt = (head (fst (partition (\x -> "v" `elem` optionShortFlags x) b)))
+
+getVersion :: ProgramData -> String
+getVersion (ProgramData nam hlp ver args cfg lpars spars) = ver
+
+
+
 optionDelimiter = '-'
 optionTerminator = "--"
 paramaterDelimiter = "="
@@ -29,20 +45,37 @@ data ProgramOption a = ProgramOption {
 , optionValue :: a
 }
 
-instance Show (ProgramOption a) where
-  show (ProgramOption txt shrt lng param eff val) = ""
+instance Show a => Show (ProgramOption a) where
+  show (ProgramOption txt shrt lng param eff val) = 
+    "{"++(show lng)
+    ++ (show shrt) ++ "_"++(show param)++"_}==>" ++ (show val)
 
 
 
-
+setOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
+setOption opts key value = (head thisOpt){optionValue = value}:otherOpts
+  where (thisOpt,otherOpts) = partition (\x -> key `elem` optionShortFlags x) opts
 
 
 helpOption :: ProgramOption Bool
-helpOption = ProgramOption "" [] [] [] (\x->x) True
+helpOption = ProgramOption "Help text"
+                           ["h"]
+                           ["help"]
+                           [] 
+                           (\x->x{boolData = setOption (boolData x) "h" True})
+                           False
+
+versionOption :: ProgramOption Bool
+versionOption = ProgramOption "Version text"
+                              ["v"]
+                              ["version"]
+                              [] 
+                              (\x->x{boolData = setOption (boolData x) "v" True})
+                              False
 
 defaultOptions :: [ProgramOption Bool]
-defaultOptions = [ (ProgramOption "" [] ["help"] [] (\x->x) False)
-                 , (ProgramOption "" [] ["version"] [] (\x->x) False)
+defaultOptions = [ helpOption
+                 , versionOption
                  ]
 
 data ConfigurationData = ConfigurationData {
@@ -54,7 +87,7 @@ data ConfigurationData = ConfigurationData {
 
 data ProgramData = ProgramData {
   appName :: String
-, appHelp :: String
+, appHelp :: (String,String)
 , appVersion :: String
 , argumentStrings :: [String]
 --, argumentTokens :: [OptionToken]
@@ -64,15 +97,15 @@ data ProgramData = ProgramData {
 }
 
 instance Show (ProgramData) where
-  show (ProgramData nam hlp ver args cfg lpars spars) = ""
-
-
+  show (ProgramData nam hlp ver args cfg lpars spars) =
+    " :: " ++ nam ++ " :: "++(show cfg)
 
 
 
 parseArguments :: ProgramData -> [String] -> ProgramData
 parseArguments dat [] = dat
-parseArguments dat (arg:args) = parseArguments dat args
+parseArguments dat (arg:args) = parseArguments (newDat) args
+  where newDat = parseArgument dat arg
 
 
 parseArgument :: ProgramData -> String -> ProgramData
@@ -88,21 +121,27 @@ parseLongOption :: ProgramData -> String -> ProgramData
 parseLongOption dat [] = dat
 --parseLongOption dat "help" = dat{configuration=((configuration dat){boolData=(boolData (configuration dat))++[]})}
 parseLongOption dat "help" = addOption dat True helpOption
+parseLongOption dat "version" = addOption dat True versionOption
 parseLongOption dat long = dat{configuration=(configParser long)}
-  where oldConfig = configuration dat
-        configParser = (longParser dat) oldConfig
+  where configParser = (longParser dat) (configuration dat)
+        
 
 parseShortOption :: ProgramData -> String -> ProgramData
 parseShortOption dat [] = dat
 parseShortOption dat shorts = dat{configuration=(configParser shorts)}
-  where oldConfig = configuration dat
-        configParser = (shortParser dat) oldConfig
+  where configParser = (shortParser dat) (configuration dat)
+        
 
 
 
 addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
 addOption dat x opt = dat{configuration = thisEffect (configuration dat)}
   where thisEffect = optionEffect opt
+
+
+
+
+-- old and crusty from here on... to prune out of programs
 
 
 

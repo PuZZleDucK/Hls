@@ -5,27 +5,30 @@ import System.Console.Terminfo.Base
 import Data.List
 import GnUtils
 
---data ProgramOption = ProgramOption {
---  optionName :: String
---, optionShortFlags :: [String]
---, optionLongFlags :: [String]
---, optionParamaters :: [String]
---  --effect
---}
-
 --data ProgramData = ProgramData {
 --  appName :: String
 --, appHelp :: String
 --, appVersion :: String
 --, argumentStrings :: [String]
---, argumentTokens :: [OptionToken]
---, configuration :: [ProgramOption]
+--, configuration :: ConfigurationData
 --, longParser :: ProgramData -> String -> ProgramData
 --, shortParser :: ProgramData -> String -> ProgramData
 --}
 
+--data ConfigurationData = ConfigurationData {
+--  boolData :: [ProgramOption Bool]
+--, stringData :: [ProgramOption String]
+--, integerData :: [ProgramOption Integer]
+--, floatData :: [ProgramOption Float]
+--} deriving (Show)
 
-
+shufDumm = ProgramData "shuf"
+                       ("help","text")
+                       "version text"
+                       [] -- args
+                       (ConfigurationData defaultOptions [] [] []) --cfg
+                       (\x y -> x)
+                       (\x y -> x)
 
 main :: IO ()
 main = do
@@ -34,21 +37,27 @@ main = do
 
   let shuf = ProgramData {
     appName = shufAppName
-  , appHelp = shufAppHelp
+  , appHelp = (shufAppHelpPre,shufAppHelpPost)
   , appVersion = shufAppVersion
   , argumentStrings = args
---  , argumentTokens = []
-  , configuration = ConfigurationData [] [] [] []
+  , configuration = ConfigurationData defaultOptions [] [] []
   , longParser = shufLongParser
   , shortParser = shufShortParser
   }
+--  runTermOutput term (termText ((show shuf)++"\n"))
   let parsedShuf = parseArguments shuf args
 
 --  let options = processArgs args defaultShuf
 
 --  output <- showOutput options
 --  runTermOutput term (termText (output))
---  runTermOutput term (termText ("Options: "++(show options)++"\n"))
+  if doHelp shuf
+    then runTermOutput term (termText (getHelp shuf))
+    else return ()
+  if doVersion shuf
+    then runTermOutput term (termText (getVersion shuf))
+    else return ()
+  runTermOutput term (termText ((show parsedShuf)++"\n"))
   return ()
 
 
@@ -62,7 +71,8 @@ shufShortParser :: ConfigurationData -> String -> ConfigurationData
 shufShortParser = (\x y -> x)
 
 shufAppName = "Hshuf"
-shufAppHelp = "help me shuffle"
+shufAppHelpPre = "help me shuffle..."
+shufAppHelpPost = "...done"
 shufAppVersion = "shuffle\n version\n"
 
 
