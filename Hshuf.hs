@@ -40,35 +40,39 @@ main = do
   , appHelp = (shufAppHelpPre,shufAppHelpPost)
   , appVersion = shufAppVersion
   , argumentStrings = args
-  , configuration = ConfigurationData defaultOptions [] [] []
+  , configuration = defaultConfig
   , longParser = shufLongParser
   , shortParser = shufShortParser
   }
---  runTermOutput term (termText ((show shuf)++"\n"))
   let parsedShuf = parseArguments shuf args
-
---  let options = processArgs args defaultShuf
 
 --  output <- showOutput options
 --  runTermOutput term (termText (output))
-  if doHelp shuf
-    then runTermOutput term (termText (getHelp shuf))
+  if doHelp parsedShuf
+    then runTermOutput term (termText (getHelp parsedShuf))
     else return ()
-  if doVersion shuf
-    then runTermOutput term (termText (getVersion shuf))
+  if doVersion parsedShuf
+    then runTermOutput term (termText (getVersion parsedShuf))
     else return ()
-  runTermOutput term (termText ((show parsedShuf)++"\n"))
+  runTermOutput term (termText ("\n"++(show parsedShuf)++"\n"))
   return ()
 
 
 
+defaultConfig = ConfigurationData defaultOptions [] [] []
 
 shufLongParser :: ConfigurationData -> String -> ConfigurationData
 shufLongParser dat [] = dat
-shufLongParser dat "shufflag" = dat
+shufLongParser dat "zero-terminated" = dat
+shufLongParser dat "repeat" = dat
+shufLongParser dat "random-source" = dat -- =FILE
+shufLongParser dat "output" = dat -- =FILE
+shufLongParser dat "head-count" = dat -- =COUNT
+shufLongParser dat "input-range" = dat -- =LO-HI
+shufLongParser dat "echo" = dat
 
 shufShortParser :: ConfigurationData -> String -> ConfigurationData
-shufShortParser = (\x y -> x)
+shufShortParser = (\x y -> x) -- z r o=FILE n=COUNT i=LO-HI e
 
 shufAppName = "Hshuf"
 shufAppHelpPre = "help me shuffle..."
@@ -97,8 +101,24 @@ data ShufOptions = ShufOptions
 
 
 helpText :: [String]
-helpText = [ ""
-           , "keep the newline->\n"
+helpText = [ "Usage: /home/bminerds/x/coreutils/src/shuf [OPTION]... [FILE]"
+           , "  or:  /home/bminerds/x/coreutils/src/shuf -e [OPTION]... [ARG]..."
+           , "  or:  /home/bminerds/x/coreutils/src/shuf -i LO-HI [OPTION]..."
+           , "Write a random permutation of the input lines to standard output."
+           , "Mandatory arguments to long options are mandatory for short options too."
+           , "  -e, --echo                treat each ARG as an input line"
+             , "-i, --input-range=LO-HI   treat each number LO through HI as an input line"
+           , "  -n, --head-count=COUNT    output at most COUNT lines"
+           , "  -o, --output=FILE         write result to FILE instead of standard output"
+           , "      --random-source=FILE  get random bytes from FILE"
+           , "  -r, --repeat              output lines can be repeated"
+           , "  -z, --zero-terminated     line delimiter is NUL, not newline"
+           , "      --help     display this help and exit"
+           , "      --version  output version information and exit"
+           , "With no FILE, or when FILE is -, read standard input."
+           , "GNU coreutils online help: <http://www.gnu.org/software/coreutils/>"
+           , "Full documentation at: <http://www.gnu.org/software/coreutils/shuf>"
+           , "or available locally via: info '(coreutils) shuf invocation'\n"
            ]
 
 versionText :: [String]
