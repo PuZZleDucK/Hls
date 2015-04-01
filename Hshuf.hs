@@ -58,8 +58,60 @@ main = do
   return ()
 
 
+zeroOption :: ProgramOption Bool
+zeroOption = ProgramOption "zero-terminated text"
+  ["z"]
+  ["zero-terminated"]
+  []
+  (\x->x{boolData = setOption (boolData x) "z" True})
+  False
+repeatOption :: ProgramOption Bool
+repeatOption = ProgramOption "repeat text"
+  ["r"]
+  ["repeat"]
+  []
+  (\x->x{boolData = setOption (boolData x) "r" True})
+  False
+sourceOption :: ProgramOption String
+sourceOption = ProgramOption "random-source text"
+  []
+  ["random-source"]
+  []
+  (\x->x{stringData = setOption (stringData x) "random-source" "<INPUT>"})
+  ""
+outputOption :: ProgramOption String
+outputOption = ProgramOption "output text"
+  ["o"]
+  ["output"]
+  []
+  (\x->x{stringData = setOption (stringData x) "o" "<INPUT>"})
+  ""
+countOption :: ProgramOption Integer
+countOption = ProgramOption "head-count text"
+  ["n"]
+  ["head-count"]
+  []
+  (\x->x{integerData = setOption (integerData x) "n" 666})
+  0
+rangeOption :: ProgramOption Integer
+rangeOption = ProgramOption "input-range text"
+  ["i"]
+  ["input-range"]
+  []
+  (\x->x{integerData = setOption (integerData x) "i" 666})
+  0
+echoOption :: ProgramOption Bool
+echoOption = ProgramOption "echo text"
+  ["e"]
+  ["echo"]
+  []
+  (\x->x{boolData = setOption (boolData x) "e" True})
+  False
 
-defaultConfig = ConfigurationData defaultOptions [] [] []
+defaultBools = zeroOption : repeatOption : echoOption : defaultOptions
+dafaultStrings = [sourceOption, outputOption]
+defaultIntegers = [countOption, rangeOption]
+defaultConfig = ConfigurationData defaultBools dafaultStrings defaultIntegers []
 
 shufLongParser :: ConfigurationData -> String -> ConfigurationData
 shufLongParser dat [] = dat
@@ -72,7 +124,11 @@ shufLongParser dat "input-range" = dat -- =LO-HI
 shufLongParser dat "echo" = dat
 
 shufShortParser :: ConfigurationData -> String -> ConfigurationData
-shufShortParser = (\x y -> x) -- z r o=FILE n=COUNT i=LO-HI e
+shufShortParser cfg [] = cfg
+shufShortParser cfg _ = cfg
+--shufShortParser cfg (flag:others) = 
+--  where thiseffect = head (filter () )
+--shufShortParser = (\x y -> x) -- z r o=FILE n=COUNT i=LO-HI e
 
 shufAppName = "Hshuf"
 shufAppHelpPre = "help me shuffle..."

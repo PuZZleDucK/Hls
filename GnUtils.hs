@@ -53,7 +53,16 @@ instance Show a => Show (ProgramOption a) where
 
 
 setOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
-setOption opts key value = (head thisOpt){optionValue = value}:otherOpts
+setOption opts key value = if length key > 1
+  then setLongOption opts key value
+  else setShortOption opts key value
+
+setLongOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
+setLongOption opts key value = (head thisOpt){optionValue = value}:otherOpts
+  where (thisOpt,otherOpts) = partition (\x -> key `elem` optionLongFlags x) opts
+
+setShortOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
+setShortOption opts key value = (head thisOpt){optionValue = value}:otherOpts
   where (thisOpt,otherOpts) = partition (\x -> key `elem` optionShortFlags x) opts
 
 
@@ -128,6 +137,8 @@ parseLongOption dat long = dat{configuration=(configParser long)}
 
 parseShortOption :: ProgramData -> String -> ProgramData
 parseShortOption dat [] = dat
+parseShortOption dat "h" = addOption dat True helpOption
+parseShortOption dat "v" = addOption dat True versionOption
 parseShortOption dat shorts = dat{configuration=(configParser shorts)}
   where configParser = (shortParser dat) (configuration dat)
         
