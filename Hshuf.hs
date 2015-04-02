@@ -116,7 +116,7 @@ defaultConfig = ConfigurationData defaultBools dafaultStrings defaultIntegers []
 shufLongParser :: ConfigurationData -> String -> ConfigurationData
 shufLongParser dat [] = dat
 shufLongParser dat "zero-terminated" = dat
-shufLongParser dat "repeat" = dat
+shufLongParser dat "repeat" = (optionEffect (getBool dat "repeat")) dat 
 shufLongParser dat "random-source" = dat -- =FILE
 shufLongParser dat "output" = dat -- =FILE
 shufLongParser dat "head-count" = dat -- =COUNT

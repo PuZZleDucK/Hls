@@ -52,6 +52,52 @@ instance Show a => Show (ProgramOption a) where
 
 
 
+getBool :: ConfigurationData -> String -> ProgramOption Bool
+getBool opts key = if length key > 1
+  then getLongBool opts key
+  else getShortBool opts key
+
+getLongBool :: ConfigurationData -> String -> ProgramOption Bool
+getLongBool cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (boolData cfg))
+
+getShortBool :: ConfigurationData -> String -> ProgramOption Bool
+getShortBool cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (boolData cfg))
+
+getString :: ConfigurationData -> String -> ProgramOption String
+getString opts key = if length key > 1
+  then getLongString opts key
+  else getShortString opts key
+
+getLongString :: ConfigurationData -> String -> ProgramOption String
+getLongString cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (stringData cfg))
+
+getShortString :: ConfigurationData -> String -> ProgramOption String
+getShortString cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (stringData cfg))
+
+getInteger :: ConfigurationData -> String -> ProgramOption Integer
+getInteger opts key = if length key > 1
+  then getLongInteger opts key
+  else getShortInteger opts key
+
+getLongInteger :: ConfigurationData -> String -> ProgramOption Integer
+getLongInteger cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (integerData cfg))
+
+getShortInteger :: ConfigurationData -> String -> ProgramOption Integer
+getShortInteger cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (integerData cfg))
+
+getFloat :: ConfigurationData -> String -> ProgramOption Float
+getFloat opts key = if length key > 1
+  then getLongFloat opts key
+  else getShortFloat opts key
+
+getLongFloat :: ConfigurationData -> String -> ProgramOption Float
+getLongFloat cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (floatData cfg))
+
+getShortFloat :: ConfigurationData -> String -> ProgramOption Float
+getShortFloat cfg str = head (filter (\x -> str `elem` (optionShortFlags x)) (floatData cfg))
+
+
+
 setOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
 setOption opts key value = if length key > 1
   then setLongOption opts key value
