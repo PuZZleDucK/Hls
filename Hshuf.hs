@@ -113,17 +113,17 @@ dafaultStrings = [sourceOption, outputOption]
 defaultIntegers = [countOption, rangeOption]
 defaultConfig = ConfigurationData defaultBools dafaultStrings defaultIntegers []
 
-shufLongParser :: ConfigurationData -> String -> ConfigurationData
+shufLongParser :: ProgramData -> String -> ProgramData
 shufLongParser dat [] = dat
-shufLongParser dat "zero-terminated" = dat
-shufLongParser dat "repeat" = (optionEffect (getBool dat "repeat")) dat 
-shufLongParser dat "random-source" = dat -- =FILE
-shufLongParser dat "output" = dat -- =FILE
-shufLongParser dat "head-count" = dat -- =COUNT
-shufLongParser dat "input-range" = dat -- =LO-HI
-shufLongParser dat "echo" = dat
+shufLongParser dat "zero-terminated" = addOption dat True zeroOption
+shufLongParser dat "repeat" = addOption dat True repeatOption
+--shufLongParser dat "random-source" = addOption dat True repeatOption -- =FILE
+--shufLongParser dat "output" = addOption dat True repeatOption -- =FILE
+--shufLongParser dat "head-count" = addOption dat True repeatOption -- =COUNT
+--shufLongParser dat "input-range" = addOption dat True repeatOption -- =LO-HI
+shufLongParser dat "echo" = addOption dat True echoOption
 
-shufShortParser :: ConfigurationData -> String -> ConfigurationData
+shufShortParser :: ProgramData -> String -> ProgramData
 shufShortParser cfg [] = cfg
 shufShortParser cfg _ = cfg
 --shufShortParser cfg (flag:others) = 

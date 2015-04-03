@@ -47,8 +47,8 @@ data ProgramOption a = ProgramOption {
 
 instance Show a => Show (ProgramOption a) where
   show (ProgramOption txt shrt lng param eff val) = 
-    "{"++(show lng)
-    ++ (show shrt) ++ "_"++(show param)++"_}==>" ++ (show val)
+    "\n{"++(show lng)
+    ++ (show shrt) ++ "_"++(show param)++"_}==>{" ++ (show val) ++ "}"
 
 
 
@@ -138,7 +138,15 @@ data ConfigurationData = ConfigurationData {
 , stringData :: [ProgramOption String]
 , integerData :: [ProgramOption Integer]
 , floatData :: [ProgramOption Float]
-} deriving (Show)
+}
+
+instance Show (ConfigurationData) where
+  show (ConfigurationData b s i f) =
+    "\nBool:"++(show b)++
+    "\nString:"++(show s)++
+    "\nInt:"++(show i)++
+    "\nFloat"++(show f)
+
 
 data ProgramData = ProgramData {
   appName :: String
@@ -147,8 +155,8 @@ data ProgramData = ProgramData {
 , argumentStrings :: [String]
 --, argumentTokens :: [OptionToken]
 , configuration :: ConfigurationData
-, longParser :: ConfigurationData -> String -> ConfigurationData
-, shortParser :: ConfigurationData -> String -> ConfigurationData
+, longParser :: ProgramData -> String -> ProgramData
+, shortParser :: ProgramData -> String -> ProgramData
 }
 
 instance Show (ProgramData) where
@@ -177,16 +185,16 @@ parseLongOption dat [] = dat
 --parseLongOption dat "help" = dat{configuration=((configuration dat){boolData=(boolData (configuration dat))++[]})}
 parseLongOption dat "help" = addOption dat True helpOption
 parseLongOption dat "version" = addOption dat True versionOption
-parseLongOption dat long = dat{configuration=(configParser long)}
-  where configParser = (longParser dat) (configuration dat)
-        
+parseLongOption dat long = configParser long
+  where configParser = (longParser dat) dat
+
 
 parseShortOption :: ProgramData -> String -> ProgramData
 parseShortOption dat [] = dat
 parseShortOption dat "h" = addOption dat True helpOption
 parseShortOption dat "v" = addOption dat True versionOption
-parseShortOption dat shorts = dat{configuration=(configParser shorts)}
-  where configParser = (shortParser dat) (configuration dat)
+parseShortOption dat shorts = configParser shorts
+  where configParser = (shortParser dat) dat
         
 
 
