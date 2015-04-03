@@ -125,6 +125,9 @@ shufLongParser dat "echo" = addOption dat True echoOption
 
 shufShortParser :: ProgramData -> String -> ProgramData
 shufShortParser cfg [] = cfg
+shufShortParser dat "z" = addOption dat True zeroOption
+shufShortParser dat "r" = addOption dat True repeatOption
+shufShortParser dat "e" = addOption dat True echoOption
 shufShortParser cfg _ = cfg
 --shufShortParser cfg (flag:others) = 
 --  where thiseffect = head (filter () )
