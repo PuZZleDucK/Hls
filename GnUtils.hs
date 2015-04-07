@@ -7,18 +7,18 @@ import Data.List
 
 
 doHelp :: ProgramData -> Bool
-doHelp (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _) = optionValue thisOpt -- True -- thisOpt
+doHelp (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _ _) = optionValue thisOpt -- True -- thisOpt
   where thisOpt = (head (fst (partition (\x -> "h" `elem` optionShortFlags x) b)))
 
 getHelp :: ProgramData -> String
-getHelp (ProgramData _ hlp _ _ _ _ _) = fst hlp ++ "<options go here>" ++ snd hlp
+getHelp (ProgramData _ hlp _ _ _ _ _ _) = fst hlp ++ "<options go here>" ++ snd hlp
 
 doVersion :: ProgramData -> Bool
-doVersion (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _) = optionValue thisOpt -- True -- thisOpt
+doVersion (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _ _) = optionValue thisOpt -- True -- thisOpt
   where thisOpt = (head (fst (partition (\x -> "v" `elem` optionShortFlags x) b)))
 
 getVersion :: ProgramData -> String
-getVersion (ProgramData _ _ ver _ _ _ _) = ver
+getVersion (ProgramData _ _ ver _ _ _ _ _) = ver
 
 
 
@@ -37,6 +37,20 @@ data OptionParamater = OP (Either () String) deriving (Eq, Show)
 data OptionToken = OT String OptionParamater | TargetToken String deriving (Eq, Show)
 --data Arguments = [OptionToken]
 --data TargetToken = 
+data OptValue = BoolOpt Bool -- now I can pattern match on option sub-types
+              | StringOpt String 
+              | IntOpt Integer 
+              | FloatOpt Float
+              | IntRangeOpt Integer Integer
+
+data ProgramOpt = ProgramOpt {
+  optText :: String
+, optShortFlags :: [String]
+, optLongFlags :: [String]
+, optParamaters :: [String]
+, optEffect :: ConfigurationData -> ConfigurationData
+, optValue :: OptValue -- match me
+}
 
 data ProgramOption a = ProgramOption {
   optionText :: String
@@ -53,9 +67,11 @@ instance Show a => Show (ProgramOption a) where
     ++ (show shrt) ++ "_"++(show param)++"_}==>{" ++ (show val) ++ "}"
 
 
+--getOp :: ConfigurationData -> String -> ProgramOption a
+--getOp cfg str = if length ((getBool cfg str):[]) > 0 then ProgramOption "" [] [] [] (\x->x) () else ProgramOption "" [] [] [] (\x->x) ()
 
 getBool :: ConfigurationData -> String -> ProgramOption Bool
-getBool opts key = if length key > 1
+getBool opts key = if length key > 1 
   then getLongBool opts key
   else getShortBool opts key
 
@@ -157,11 +173,12 @@ data ProgramData = ProgramData {
 , argumentStrings :: [String]
 , configuration :: ConfigurationData
 , longParser :: ProgramData -> String -> ProgramData
+, longOptionParser :: ProgramData -> String -> String -> ProgramData
 , shortParser :: ProgramData -> String -> ProgramData
 }
 
 instance Show (ProgramData) where
-  show (ProgramData nam _hlp _ver _args cfg _lpars _spars) =
+  show (ProgramData nam _hlp _ver _args cfg _lpars _loparse _spars) =
     " :: " ++ nam ++ " :: "++(show cfg)
 
 
@@ -279,8 +296,9 @@ processShortOptions _ [] opts = opts
 processShortOptions flags (x:xs) opts = processShortOptions flags (xs) ((getShortEffect flags x) opts)
 
 processShorts :: [OptionFlags x] -> [String] -> x -> x
-processShorts flags ((c:rst):others) opts | c == '-' = processLong flags (rst:others) opts
-                                          | otherwise = processArgs flags others (processShortOptions flags (c:rst) opts)
+processShorts flags ((chr:rst):others) opts 
+  | chr == '-' = processLong flags (rst:others) opts
+  | otherwise = processArgs flags others (processShortOptions flags (chr:rst) opts)
 processShorts _ _ opts = opts
 
 processLong :: [OptionFlags x] -> [String] -> x -> x

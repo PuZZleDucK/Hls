@@ -17,6 +17,7 @@ main = do
   , argumentStrings = args
   , configuration = defaultConfig
   , longParser = shufLongParser
+  , longOptionParser = shufLongOptionParser
   , shortParser = shufShortParser
   }
   let parsedShuf = parseArguments shuf args
@@ -85,12 +86,16 @@ shufAppVersion = "shuffle\n version\n"
 shufLongParser :: ProgramData -> String -> ProgramData
 shufLongParser dat "zero-terminated" = addOption dat True zeroOption
 shufLongParser dat "repeat" = addOption dat True repeatOption
-shufLongParser dat "random-source" = addOption dat "FILE" sourceOption -- =FILE
+--shufLongParser dat "random-source" = addOption dat "FILE" sourceOption -- =FILE
 --shufLongParser dat "output" = addOption dat True repeatOption -- =FILE
 --shufLongParser dat "head-count" = addOption dat True repeatOption -- =COUNT
 --shufLongParser dat "input-range" = addOption dat True repeatOption -- =LO-HI
 shufLongParser dat "echo" = addOption dat True echoOption
 shufLongParser dat _ = dat
+
+shufLongOptionParser :: ProgramData -> String -> String -> ProgramData
+shufLongOptionParser dat "random-source" tgt = addOption dat tgt sourceOption -- =FILE
+shufLongOptionParser dat _ _ = dat
 
 shufShortParser :: ProgramData -> String -> ProgramData
 shufShortParser cfg [] = cfg
