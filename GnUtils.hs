@@ -1,33 +1,35 @@
 -- GnUtils, utils for a haskell implementation of GNU core-utils.
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 module GnUtils where
-import System.Environment
-import System.Console.Terminfo.Base
 import Data.List
 
 
 
 
 doHelp :: ProgramData -> Bool
-doHelp (ProgramData nam hlp ver args (ConfigurationData b s i f) lpars spars) = optionValue thisOpt -- True -- thisOpt
+doHelp (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _) = optionValue thisOpt -- True -- thisOpt
   where thisOpt = (head (fst (partition (\x -> "h" `elem` optionShortFlags x) b)))
 
 getHelp :: ProgramData -> String
-getHelp (ProgramData nam hlp ver args cfg lpars spars) = fst hlp ++ "<options go here>" ++ snd hlp
+getHelp (ProgramData _ hlp _ _ _ _ _) = fst hlp ++ "<options go here>" ++ snd hlp
 
 doVersion :: ProgramData -> Bool
-doVersion (ProgramData nam hlp ver args (ConfigurationData b s i f) lpars spars) = optionValue thisOpt -- True -- thisOpt
+doVersion (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _) = optionValue thisOpt -- True -- thisOpt
   where thisOpt = (head (fst (partition (\x -> "v" `elem` optionShortFlags x) b)))
 
 getVersion :: ProgramData -> String
-getVersion (ProgramData nam hlp ver args cfg lpars spars) = ver
+getVersion (ProgramData _ _ ver _ _ _ _) = ver
 
 
 
+optionDelimiter :: Char
 optionDelimiter = '-'
-optionTerminator = "--"
-paramaterDelimiter = "="
-optionParamaterDelimiter = ":"
+_optionTerminator :: String
+_optionTerminator = "--"
+_paramaterDelimiter :: String
+_paramaterDelimiter = "="
+_optionParamaterDelimiter :: String
+_optionParamaterDelimiter = ":"
 
 
 
@@ -46,7 +48,7 @@ data ProgramOption a = ProgramOption {
 }
 
 instance Show a => Show (ProgramOption a) where
-  show (ProgramOption txt shrt lng param eff val) = 
+  show (ProgramOption _txt shrt lng param _eff val) = 
     "\n{"++(show lng)
     ++ (show shrt) ++ "_"++(show param)++"_}==>{" ++ (show val) ++ "}"
 
@@ -153,14 +155,13 @@ data ProgramData = ProgramData {
 , appHelp :: (String,String)
 , appVersion :: String
 , argumentStrings :: [String]
---, argumentTokens :: [OptionToken]
 , configuration :: ConfigurationData
 , longParser :: ProgramData -> String -> ProgramData
 , shortParser :: ProgramData -> String -> ProgramData
 }
 
 instance Show (ProgramData) where
-  show (ProgramData nam hlp ver args cfg lpars spars) =
+  show (ProgramData nam _hlp _ver _args cfg _lpars _spars) =
     " :: " ++ nam ++ " :: "++(show cfg)
 
 
@@ -178,6 +179,7 @@ parseArgument dat (marker1:marker2:rest) = if marker1 == optionDelimiter
     then parseLongOption dat rest
     else parseShortOption dat (marker2:rest)
   else dat  -- {argumentTokens = (argumentTokens dat)++[TargetToken (marker1:marker2:rest)]}
+parseArgument dat _ = dat
 
 --check for --help --version and -- here
 parseLongOption :: ProgramData -> String -> ProgramData
@@ -200,7 +202,7 @@ parseShortOption dat shorts = configParser shorts
 
 
 addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
-addOption dat x opt = dat{configuration = thisEffect (configuration dat)}
+addOption dat _x opt = dat{configuration = thisEffect (configuration dat)}
   where thisEffect = optionEffect opt
 
 
@@ -279,17 +281,21 @@ processShortOptions flags (x:xs) opts = processShortOptions flags (xs) ((getShor
 processShorts :: [OptionFlags x] -> [String] -> x -> x
 processShorts flags ((c:rst):others) opts | c == '-' = processLong flags (rst:others) opts
                                           | otherwise = processArgs flags others (processShortOptions flags (c:rst) opts)
+processShorts _ _ opts = opts
 
 processLong :: [OptionFlags x] -> [String] -> x -> x
 processLong flags (opt:others) opts = processArgs flags others ((getLongEffect flags opt) opts)
+processLong _ _ opts = opts
 
 
 
 processArgs :: [OptionFlags x] -> [String] -> x -> x
-processArgs flags [] opts = opts
+processArgs _flags [] opts = opts
 --processArgs NoOpts remaining opts = opts{targets=(targets opts) ++ remaining}
 processArgs flags ((c:rst):others) opts | c == '-' = processShorts flags (rst:others) opts
                                         | otherwise = processArgs flags others opts --targets is not visible here!!! {targets = (targets opts)++[(c:rst)]}
+processArgs _ _ opts = opts
+
 
 
 

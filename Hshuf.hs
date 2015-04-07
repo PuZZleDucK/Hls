@@ -2,7 +2,7 @@
 module Main where
 import System.Environment
 import System.Console.Terminfo.Base
-import Data.List
+--import Data.List
 import GnUtils
 
 main :: IO ()
@@ -29,7 +29,7 @@ main = do
   if doVersion parsedShuf
     then runTermOutput term (termText (getVersion parsedShuf))
     else return ()
---  runTermOutput term (termText ("\n"++(show parsedShuf)++"\n"))
+  runTermOutput term (termText ("\n"++(show parsedShuf)++"\n")) --debug opts
   return ()
 
 
@@ -37,7 +37,7 @@ main = do
 
 
 showOutput :: ProgramData -> IO String
-showOutput opts = return "<<>>\n" -- <do-stuff-Here>
+showOutput _opts = return "<<>>\n" -- <do-stuff-Here>
 
 defaultShuf :: ShufOptions
 defaultShuf = ShufOptions 
@@ -45,11 +45,16 @@ defaultShuf = ShufOptions
 data ShufOptions = ShufOptions
   {  } deriving (Show, Eq)
 
+defaultBools :: [ProgramOption Bool]
 defaultBools = zeroOption : repeatOption : echoOption : defaultOptions
+dafaultStrings :: [ProgramOption String]
 dafaultStrings = [sourceOption, outputOption]
+defaultIntegers :: [ProgramOption Integer]
 defaultIntegers = [countOption, rangeOption]
+defaultConfig :: ConfigurationData
 defaultConfig = ConfigurationData defaultBools dafaultStrings defaultIntegers []
 
+shufAppHelpPre :: String
 shufAppHelpPre =
   "Usage: /home/bminerds/x/coreutils/src/shuf [OPTION]... [FILE]"
   ++"  or:  /home/bminerds/x/coreutils/src/shuf -e [OPTION]... [ARG]..."
@@ -57,12 +62,14 @@ shufAppHelpPre =
   ++ "Write a random permutation of the input lines to standard output."
   ++ "Mandatory arguments to long options are mandatory for short options too."
 
+shufAppHelpPost :: String
 shufAppHelpPost =
   "With no FILE, or when FILE is -, read standard input."
   ++"GNU coreutils online help: <http://www.gnu.org/software/coreutils/>"
   ++"Full documentation at: <http://www.gnu.org/software/coreutils/shuf>"
   ++"or available locally via: info '(coreutils) shuf invocation'\n"
 
+shufAppVersion :: String
 shufAppVersion = "shuffle\n version\n"
 
 --helpText  = ["  -e, --echo                treat each ARG as an input line"
@@ -76,14 +83,14 @@ shufAppVersion = "shuffle\n version\n"
 --           , "      --version  output version information and exit"
 
 shufLongParser :: ProgramData -> String -> ProgramData
-shufLongParser dat [] = dat
 shufLongParser dat "zero-terminated" = addOption dat True zeroOption
 shufLongParser dat "repeat" = addOption dat True repeatOption
---shufLongParser dat "random-source" = addOption dat True repeatOption -- =FILE
+shufLongParser dat "random-source" = addOption dat "FILE" sourceOption -- =FILE
 --shufLongParser dat "output" = addOption dat True repeatOption -- =FILE
 --shufLongParser dat "head-count" = addOption dat True repeatOption -- =COUNT
 --shufLongParser dat "input-range" = addOption dat True repeatOption -- =LO-HI
 shufLongParser dat "echo" = addOption dat True echoOption
+shufLongParser dat _ = dat
 
 shufShortParser :: ProgramData -> String -> ProgramData
 shufShortParser cfg [] = cfg
@@ -114,7 +121,7 @@ sourceOption = ProgramOption "random-source text"
   []
   ["random-source"]
   []
-  (\x->x{stringData = setOption (stringData x) "random-source" "<INPUT>"})
+  (\x->x{stringData = setOption (stringData x) "random-source" "<IN>"})
   ""
 outputOption :: ProgramOption String
 outputOption = ProgramOption "output text"
