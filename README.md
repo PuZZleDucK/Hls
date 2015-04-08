@@ -20,7 +20,8 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * pwd ==> Hpwd (Started, but will need redo)
 * sort ==> Hsort (Options and text)
 * touch ==> Htouch (Options and text)
-* shuf ==> Hshuf (Started, argument redo)
+* shuf ==> Hshuf (Started, argument redo, messy)
+* truncate ==> Htruncate (Options with params trial)
 
 ### ToDo - Interesting: ###
 * users ==> skeleton
@@ -39,10 +40,9 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * date
 
 ### ToDo - Easy: ###
-* 
 * uptime / groups / hostid / hostname
 * uname / uname-arch / uname-uname
-* truncate / tail
+* tail
 * split
 * rm / rmdir / mv / mkdir / cp / chgrp / chmod / chown
 * nice
