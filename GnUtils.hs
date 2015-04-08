@@ -5,7 +5,7 @@ import Data.List
 
 
 
-
+-- these could be consolidated by just returning "" if no help is to be shown rather than checking then displaying
 doHelp :: ProgramData -> Bool
 doHelp (ProgramData _ _ _ _ (ConfigurationData b _ _ _) _ _ _) = optionValue thisOpt -- True -- thisOpt
   where thisOpt = (head (fst (partition (\x -> "h" `elem` optionShortFlags x) b)))
@@ -151,6 +151,7 @@ defaultOptions = [ helpOption
                  , versionOption
                  ]
 
+-- this is very messy...
 data ConfigurationData = ConfigurationData {
   boolData :: [ProgramOption Bool]
 , stringData :: [ProgramOption String]
@@ -217,7 +218,7 @@ parseShortOption dat shorts = configParser shorts
         
 
 
-
+-- set option superseeds this little fella
 addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
 addOption dat _x opt = dat{configuration = thisEffect (configuration dat)}
   where thisEffect = optionEffect opt
