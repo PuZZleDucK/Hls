@@ -2,7 +2,6 @@
 module Main where
 import System.Environment
 import System.Console.Terminfo.Base
---import Data.List
 import GUtils
 
 main :: IO ()
@@ -17,7 +16,6 @@ main = do
   , argumentStrings = args
   , configuration = customOptions
   , parser = undefined
---  , oParser = longOptionParser
   }
   let config = parseArguments defaultConfig args
   runTermOutput term (termText ("getHelp config"))
@@ -38,28 +36,28 @@ createOption :: Option
 createOption = Option "do not create any files"
   (Flags ["c"] ["no-create"])
   (BoolOpt False)
-  (OptionEffect (\(opts) _ unused -> ((replaceFlag opts "no-create" (BoolOpt True)),unused)))
+  (OptionEffect (\(opts) _ unused -> ((replaceFlag opts "no-create" (BoolOpt True)), unused)))
 
---blockOption = Option "treat SIZE as number of IO blocks instead of bytes"
---  (Flags ["o"] ["io-blocks"])
---  (BoolOpt False)
---  (OptionEffect (\(opts) _ -> replaceFlag opts "io-blocks" (BoolOpt True)))
+blockOption = Option "treat SIZE as number of IO blocks instead of bytes"
+  (Flags ["o"] ["io-blocks"])
+  (BoolOpt False)
+  (OptionEffect (\(opts) _ unused -> (replaceFlag opts "io-blocks" (BoolOpt True), unused)))
 
 referenceOption = Option "base size on RFILE"
   (Flags ["r"] ["reference"])
   (StringOpt "")
   (OptionEffect (\(opts) this rest -> let (newRef,newUnused) = parseOptionFileName (this:rest) in (replaceFlag opts "reference" (StringOpt newRef),newUnused))) --TODOing
 
---sizeOption = Option "set or adjust the file size by SIZE bytes"
---  (Flags ["s"] ["size=SIZE"])
---  (BoolOpt False)--TODO
---  (OptionEffect (\(opts) _ -> replaceFlag opts "no-create" (BoolOpt True)))--TODO
+sizeOption = Option "set or adjust the file size by SIZE bytes"
+  (Flags ["s"] ["size=SIZE"])
+  (BoolOpt False)--TODO
+  (OptionEffect (\(opts) _ unused -> (replaceFlag opts "no-create" (BoolOpt True), unused)))--TODO
 
 customOptions = catOptions defaultOptions (Options [
     createOption
---  , sizeOption
+  , sizeOption
   , referenceOption
---  , blockOption
+  , blockOption
   ])
 
 customHelp :: (String,String)

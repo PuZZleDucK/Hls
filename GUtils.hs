@@ -91,7 +91,7 @@ safeHead _ (x:_) = x
 getFlag :: String -> Options -> Option
 getFlag str (Options opts) = safeHead errorOption (filter (\x -> (isFlag (str) x)) opts)
 
-isFlag :: String -> Option -> Bool -- not handling single val params -x=<val>
+isFlag :: String -> Option -> Bool
 isFlag str option = if elem (getFlagOrPrefix str) (long (flags option))
   then True
   else elem (getFlagOrPrefix str) (short (flags option))
