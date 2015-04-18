@@ -46,12 +46,12 @@ blockOption = Option "treat SIZE as number of IO blocks instead of bytes"
 referenceOption = Option "base size on RFILE"
   (Flags ["r"] ["reference"])
   (StringOpt "")
-  (OptionEffect (\(opts) this rest -> let (newRef,newUnused) = parseOptionFileName (this:rest) in (replaceFlag opts "reference" (StringOpt newRef),newUnused))) --TODOing
+  (OptionEffect (\(opts) this rest -> let (newRef,newUnused) = parseOptionFileName (this:rest) in (replaceFlag opts "reference" (StringOpt newRef),newUnused)))
 
 sizeOption = Option "set or adjust the file size by SIZE bytes"
   (Flags ["s"] ["size=SIZE"])
   (GnuSizeOpt (GnuSize NoPrefix (-1) NoUnits))
-  (OptionEffect (\(opts) _ unused -> (replaceFlag opts "no-create" (BoolOpt True), unused)))--TODO
+  (OptionEffect (\(opts) _ unused -> (replaceFlag opts "no-create" (BoolOpt True), unused)))--TODO -- parseOptionSize
 
 customOptions = catOptions defaultOptions (Options [
     createOption
