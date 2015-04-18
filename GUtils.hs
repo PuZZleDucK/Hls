@@ -12,7 +12,7 @@ _paramaterDelimiter = "="
 _optionParamaterDelimiter :: String
 _optionParamaterDelimiter = ":"
 
-data OptionValue = BoolOpt Bool -- now I can pattern match on option sub-types
+data OptionValue = BoolOpt Bool
                  | StringOpt String
                  | ListOpt [String]
                  | IntOpt Integer 
@@ -35,27 +35,6 @@ data Option = Option {
 data Options = Options [Option]
 instance Show (Options) where
   show (Options opts) = '\n':(concat (intersperse "\n" (map show opts)))
-
---instance Show (Option) where
---  show (Option text flags value effect) = "\n{"
---    ++(show flags) ++ "_"++(show effect)++"_}==>{" ++ (show value) ++ "}"
-
---setOption :: Options -> String -> String -> Options
---setOption option flag paramaters = if (length flag) > 1
---  then setLongOption option flag paramaters
---  else setShortOption option flag paramaters
-
---setLongOption :: Options -> String -> String -> Options
---setLongOption = undefined
-
---setShortOption :: Options -> String -> String -> Options
---setShortOption = undefined
-
---addTarget :: Options -> String -> Options
---addTarget opts target = undefined
-
---getOption :: String -> Options -> Option
---getOption "" (Options opts) = head (filter (\x -> elem "" (long (flags x))) opts)
 
 targetOption :: Option
 targetOption = Option "Targets"
@@ -80,6 +59,9 @@ defaultOptions = Options [ helpOption
                          , versionOption
                          , targetOption
                          ]
+
+catOptions  :: Options -> Options -> Options
+catOptions (Options opts1) (Options opts2) = Options (opts1++opts2)
 
 replaceFlag :: Options -> String -> OptionValue -> Options
 replaceFlag opts str value = addFlag (setValue (getFlag str opts) value) (removeFlag str opts)
@@ -110,10 +92,6 @@ isFlag str option = if elem str (long (flags option))
 setTrue :: Option -> Option
 setTrue option = option{ value = BoolOpt True }
 
---instance Show (Options) where
---  show (x:xs) = "O>" ++ (show x) ++ "\n" ++ (show xs)
---  show [] = "\n"
-
 data ProgramData = ProgramData {
   appName :: String
 , appHelp :: (String,String)
@@ -134,7 +112,6 @@ parseArguments dat (arg:args) = parseArguments (newDat) args
   where newDat = parseArgument dat arg
 
 parseArgument :: ProgramData -> String -> ProgramData
---parseArgument dat [] = dat
 parseArgument dat (marker1:marker2:rest) = if marker1 == optionDelimiter
   then if marker2 == optionDelimiter
     then parseLongOption dat rest
@@ -147,46 +124,17 @@ addTarget dat target = dat{configuration = effect cfg target}
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect (getFlag "" cfg)
 
---check for --help --version and -- here
 parseLongOption :: ProgramData -> String -> ProgramData
 parseLongOption dat [] = dat
 parseLongOption dat str = dat{configuration = effect cfg str}
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect (getFlag str cfg)
 
---parseLongOption dat "help" = dat{configuration = effect cfg ""}
---  where cfg = configuration dat
---        (OptionEffect effect) = paramaterEffect helpOption
---parseLongOption dat "help" = addOption dat True helpOption
---parseLongOption dat "version" = addOption dat True versionOption
---parseLongOption dat long = configParser long
---  where configParser = (longParser dat) dat
-
-
 parseShortOption :: ProgramData -> String -> ProgramData
 parseShortOption dat [] = dat
 parseShortOption dat str = dat{configuration = effect cfg str}
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect (getFlag str cfg)
---parseShortOption dat "h" = addOption dat True helpOption
---parseShortOption dat "v" = addOption dat True versionOption
---parseShortOption dat shorts = configParser shorts
---  where configParser = (shortParser dat) dat
-        
-
-
-
---addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
---addOption dat _x opt = dat{configuration = thisEffect (configuration dat)}
---  where thisEffect = optionEffect opt
-
-
-
-
-
-
-
-
 
 
 
