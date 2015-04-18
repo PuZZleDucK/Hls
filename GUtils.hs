@@ -15,9 +15,24 @@ _optionParamaterDelimiter = ":"
 data OptionValue = BoolOpt Bool
                  | StringOpt String
                  | ListOpt [String]
-                 | IntOpt Integer 
+                 | IntOpt Integer
                  | FloatOpt Float
+                 | GnuSizeOpt GnuSize
                  | IntRangeOpt Integer Integer deriving Show
+
+data GnuSize = GnuSize Prefix Integer Units deriving Show
+data Prefix = NoPrefix | Extend | Reduce | AtMost | AtLeast | RoundDown | RoundUp deriving Show
+data Units = Kilo UnitType
+           | Mega UnitType
+           | Giga UnitType
+           | Tera UnitType
+           | Peta UnitType
+           | Eta UnitType
+           | Zeta UnitType
+           | Yota UnitType
+           | NoUnits deriving Show
+data UnitType = I024 | Bytes  deriving Show -- 1024 | 1000
+
 
 data OptionEffect = OptionEffect (Options -> String -> [String] -> (Options,[String]))
 instance Show (OptionEffect) where
@@ -163,6 +178,7 @@ parseOptionFileName (x1:x2:xs) | length x1 == 1 = (x2,xs)--single letter flag
   | elem '=' x1 = (drop 1 (dropWhile (\x -> x /= '=') x1),(x2:xs)) -- one word -flag=<value>
   | otherwise = (x2,xs)--long flag with space
 
-
+parseOptionSize :: [String] -> (String,[String])
+parseOptionSize = undefined
 
 

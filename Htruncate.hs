@@ -50,7 +50,7 @@ referenceOption = Option "base size on RFILE"
 
 sizeOption = Option "set or adjust the file size by SIZE bytes"
   (Flags ["s"] ["size=SIZE"])
-  (BoolOpt False)--TODO
+  (GnuSizeOpt (GnuSize NoPrefix (-1) NoUnits))
   (OptionEffect (\(opts) _ unused -> (replaceFlag opts "no-create" (BoolOpt True), unused)))--TODO
 
 customOptions = catOptions defaultOptions (Options [
