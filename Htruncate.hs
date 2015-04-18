@@ -15,7 +15,7 @@ main = do
   , appHelp = ("appHelpPre","appHelpPost")
   , appVersion = "appVersion"
   , argumentStrings = args
-  , configuration = defaultOptions
+  , configuration = customOptions
   , parser = undefined
 --  , oParser = longOptionParser
   }
@@ -30,6 +30,39 @@ main = do
   runTermOutput term (termText ("output"))
   runTermOutput term (termText ("\n"++(show config)++"\n")) --debug opts
   return ()
+
+
+
+
+createOption :: Option
+createOption = Option "do not create any files"
+  (Flags ["c"] ["no-create"])
+  (BoolOpt False)
+  (OptionEffect (\(opts) _ -> replaceFlag opts "no-create" (BoolOpt True)))
+
+blockOption = Option "treat SIZE as number of IO blocks instead of bytes"
+  (Flags ["o"] ["io-blocks"])
+  (BoolOpt False)
+  (OptionEffect (\(opts) _ -> replaceFlag opts "io-blocks" (BoolOpt True)))
+
+referenceOption = Option "base size on RFILE"
+  (Flags ["r"] ["reference=RFILE"])
+  (BoolOpt False)--TODO
+  (OptionEffect (\(opts) _ -> replaceFlag opts "no-create" (BoolOpt True)))--TODO
+
+sizeOption = Option "set or adjust the file size by SIZE bytes"
+  (Flags ["s"] ["size=SIZE"])
+  (BoolOpt False)--TODO
+  (OptionEffect (\(opts) _ -> replaceFlag opts "no-create" (BoolOpt True)))--TODO
+
+customOptions = catOptions defaultOptions (Options [
+    createOption
+  , sizeOption
+  , referenceOption
+  , blockOption
+  ])
+
+
 
 
 
