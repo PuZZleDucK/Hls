@@ -19,7 +19,7 @@ data OptionValue = BoolOpt Bool
                  | FloatOpt Float
                  | IntRangeOpt Integer Integer deriving Show
 
-data OptionEffect = OptionEffect (Options -> String -> Options)
+data OptionEffect = OptionEffect (Options -> String -> [String] -> (Options,[String]))
 instance Show (OptionEffect) where
   show (OptionEffect effect) = "(\\x -> x)"
 
@@ -40,19 +40,22 @@ targetOption :: Option
 targetOption = Option "Targets"
                       (Flags [""] [""])
                       (ListOpt [])
-                      (OptionEffect (\opts newTarget -> appendFlag opts "" (StringOpt newTarget)))
+                      (OptionEffect (\opts newTarget unused -> (appendFlag opts "" ((StringOpt newTarget)),unused) ))
 
 helpOption :: Option
 helpOption = Option "Help text"
                     (Flags ["h"] ["help"])
                     (BoolOpt False)
-                    (OptionEffect (\(opts) _ -> replaceFlag opts "help" (BoolOpt True)))
+                    (OptionEffect (\(opts) _ unused -> (replaceFlag opts "help" (BoolOpt True),unused)))
 
 versionOption :: Option
 versionOption = Option "Version text"
                        (Flags ["v"] ["version"])
                        (BoolOpt False)
-                       (OptionEffect (\(opts) _ -> replaceFlag opts "version" (BoolOpt True)))
+                       (OptionEffect (\(opts) _ unused -> (replaceFlag opts "version" (BoolOpt True),unused)))
+
+errorOption :: Option
+errorOption = Option "<<ERROR>>" (Flags [] []) (BoolOpt False) (OptionEffect (\x _ u -> (x,u)))
 
 defaultOptions :: Options
 defaultOptions = Options [ helpOption
@@ -64,10 +67,10 @@ catOptions  :: Options -> Options -> Options
 catOptions (Options opts1) (Options opts2) = Options (opts1++opts2)
 
 replaceFlag :: Options -> String -> OptionValue -> Options
-replaceFlag opts str value = addFlag (setValue (getFlag str opts) value) (removeFlag str opts)
+replaceFlag opts str value = addFlag (setValue (getFlag (getFlagOrPrefix str) opts) value) (removeFlag (getFlagOrPrefix str) opts)
 
 appendFlag :: Options -> String -> OptionValue -> Options
-appendFlag opts str value = addFlag (appendValue (getFlag str opts) value) (removeFlag str opts)
+appendFlag opts str value = addFlag (appendValue (getFlag (getFlagOrPrefix str) opts) value) (removeFlag (getFlagOrPrefix str) opts)
 
 setValue :: Option -> OptionValue -> Option
 setValue opt val = opt{value = val}
@@ -79,15 +82,24 @@ addFlag :: Option -> Options -> Options
 addFlag opt (Options opts) = Options (opt:opts)
 
 removeFlag :: String -> Options -> Options
-removeFlag str (Options opts) = Options (filter (\x -> not (isFlag str x)) opts)
+removeFlag str (Options opts) = Options (filter (\x -> not (isFlag (getFlagOrPrefix str) x)) opts)
+
+safeHead :: a -> [a] -> a
+safeHead def [] = def
+safeHead _ (x:_) = x
 
 getFlag :: String -> Options -> Option
-getFlag str (Options opts) = head (filter (\x -> (isFlag str x)) opts)
+getFlag str (Options opts) = safeHead errorOption (filter (\x -> (isFlag (str) x)) opts)
 
-isFlag :: String -> Option -> Bool
-isFlag str option = if elem str (long (flags option))
+isFlag :: String -> Option -> Bool -- not handling single val params -x=<val>
+isFlag str option = if elem (getFlagOrPrefix str) (long (flags option))
   then True
-  else elem str (short (flags option))
+  else elem (getFlagOrPrefix str) (short (flags option))
+
+getFlagOrPrefix :: String -> String
+getFlagOrPrefix str | elem '=' str = ((takeWhile (\x -> x /= '=') str))
+                    | otherwise = str
+
 
 setTrue :: Option -> Option
 setTrue option = option{ value = BoolOpt True }
@@ -108,33 +120,48 @@ instance Show (ProgramData) where
 parseArguments :: ProgramData -> [String] -> ProgramData
 parseArguments dat [] = dat
 parseArguments dat ("--":rest) = dat -- add rest to targets option
-parseArguments dat (arg:args) = parseArguments (newDat) args
-  where newDat = parseArgument dat arg
+parseArguments dat (arg:args) = parseArguments (newDat) unusedArgs
+  where (newDat,unusedArgs) = parseArgument dat arg args
+-- ...also need to return unused-args... should have used parsec :p
 
-parseArgument :: ProgramData -> String -> ProgramData
-parseArgument dat (marker1:marker2:rest) = if marker1 == optionDelimiter
+--need to add param for 'rest-of-args' incase needed by sub-options...
+parseArgument :: ProgramData -> String -> [String] -> (ProgramData,[String])
+parseArgument dat (marker1:marker2:rest) unused = if marker1 == optionDelimiter
   then if marker2 == optionDelimiter
-    then parseLongOption dat rest
-    else parseShortOption dat (marker2:rest)
-  else addTarget dat (marker1:marker2:rest)--targets here
-parseArgument dat _ = dat
+    then (parseLongOption dat rest unused)
+    else (parseShortOption dat (marker2:rest) unused)
+  else (addTarget dat (marker1:marker2:rest) unused)--targets here
+parseArgument dat _ unused = (dat,unused)
 
-addTarget :: ProgramData -> String -> ProgramData
-addTarget dat target = dat{configuration = effect cfg target}
+addTarget :: ProgramData -> String -> [String] -> (ProgramData,[String])
+addTarget dat target unused  = (dat{configuration = newCfg}, stillUnused)
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect (getFlag "" cfg)
+        (newCfg, stillUnused) = (effect cfg target unused)
 
-parseLongOption :: ProgramData -> String -> ProgramData
-parseLongOption dat [] = dat
-parseLongOption dat str = dat{configuration = effect cfg str}
+parseLongOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
+parseLongOption dat [] unused = (dat,unused)
+parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect (getFlag str cfg)
+        (newCfg, stillUnused) = (effect cfg (str) unused)
 
-parseShortOption :: ProgramData -> String -> ProgramData
-parseShortOption dat [] = dat
-parseShortOption dat str = dat{configuration = effect cfg str}
+parseShortOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
+parseShortOption dat [] unused = (dat,unused)
+parseShortOption dat str unused = (dat{configuration = newCfg}, stillUnused)
   where cfg = configuration dat
-        (OptionEffect effect) = paramaterEffect (getFlag str cfg)
+        (OptionEffect effect) = paramaterEffect (getFlag (str) cfg)
+        (newCfg, stillUnused) = (effect cfg (str) unused)
+
+
+
+
+
+
+parseOptionFileName :: [String] -> (String,[String])
+parseOptionFileName (x1:x2:xs) | length x1 == 1 = (x2,xs)--single letter flag
+  | elem '=' x1 = (drop 1 (dropWhile (\x -> x /= '=') x1),(x2:xs)) -- one word -flag=<value>
+  | otherwise = (x2,xs)--long flag with space
 
 
 
