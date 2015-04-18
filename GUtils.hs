@@ -12,234 +12,175 @@ _paramaterDelimiter = "="
 _optionParamaterDelimiter :: String
 _optionParamaterDelimiter = ":"
 
-data OptValue = BoolOpt Bool -- now I can pattern match on option sub-types
-              | StringOpt String 
-              | IntOpt Integer 
-              | FloatOpt Float
-              | IntRangeOpt Integer Integer
+data OptionValue = BoolOpt Bool -- now I can pattern match on option sub-types
+                 | StringOpt String
+                 | ListOpt [String]
+                 | IntOpt Integer 
+                 | FloatOpt Float
+                 | IntRangeOpt Integer Integer deriving Show
 
-data ProgramOpt = ProgramOpt {
-  optText :: String
-, optShortFlags :: [String]
-, optLongFlags :: [String]
-, optParamaters :: [String]
-, optEffect :: ConfigurationData -> ConfigurationData
-, optValue :: OptValue -- match me
-}
+data OptionEffect = OptionEffect (Options -> String -> Options)
+instance Show (OptionEffect) where
+  show (OptionEffect effect) = "(\\x -> x)"
 
-data ProgramOption a = ProgramOption {
-  optionText :: String
-, optionShortFlags :: [String]
-, optionLongFlags :: [String]
-, optionParamaters :: [String]
-, optionEffect :: ConfigurationData -> ConfigurationData
-, optionValue :: a
-}
+data Flags = Flags { short :: [String], long :: [String] } deriving Show
 
-instance Show a => Show (ProgramOption a) where
-  show (ProgramOption _txt shrt lng param _eff val) = 
-    "\n{"++(show lng)
-    ++ (show shrt) ++ "_"++(show param)++"_}==>{" ++ (show val) ++ "}"
+data Option = Option {
+  helpText :: String
+, flags :: Flags -- double pun?
+, value :: OptionValue
+, paramaterEffect :: OptionEffect
+} deriving Show
 
+data Options = Options [Option]
+instance Show (Options) where
+  show (Options opts) = '\n':(concat (intersperse "\n" (map show opts)))
 
+--instance Show (Option) where
+--  show (Option text flags value effect) = "\n{"
+--    ++(show flags) ++ "_"++(show effect)++"_}==>{" ++ (show value) ++ "}"
 
+--setOption :: Options -> String -> String -> Options
+--setOption option flag paramaters = if (length flag) > 1
+--  then setLongOption option flag paramaters
+--  else setShortOption option flag paramaters
 
-setOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
-setOption opts key value = if length key > 1
-  then setLongOption opts key value
-  else setShortOption opts key value
+--setLongOption :: Options -> String -> String -> Options
+--setLongOption = undefined
 
-setLongOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
-setLongOption opts key value = (head thisOpt){optionValue = value}:otherOpts
-  where (thisOpt,otherOpts) = partition (\x -> key `elem` optionLongFlags x) opts
+--setShortOption :: Options -> String -> String -> Options
+--setShortOption = undefined
 
-setShortOption :: [ProgramOption a] -> String -> a -> [ProgramOption a]
-setShortOption opts key value = (head thisOpt){optionValue = value}:otherOpts
-  where (thisOpt,otherOpts) = partition (\x -> key `elem` optionShortFlags x) opts
+--addTarget :: Options -> String -> Options
+--addTarget opts target = undefined
 
+--getOption :: String -> Options -> Option
+--getOption "" (Options opts) = head (filter (\x -> elem "" (long (flags x))) opts)
 
-helpOption :: ProgramOption Bool
-helpOption = ProgramOption "Help text"
-                           ["h"]
-                           ["help"]
-                           [] 
-                           (\x->x{boolData = setOption (boolData x) "h" True})
-                           False
+targetOption :: Option
+targetOption = Option "Targets"
+                      (Flags [""] [""])
+                      (ListOpt [])
+                      (OptionEffect (\opts newTarget -> appendFlag opts "" (StringOpt newTarget)))
 
-versionOption :: ProgramOption Bool
-versionOption = ProgramOption "Version text"
-                              ["v"]
-                              ["version"]
-                              [] 
-                              (\x->x{boolData = setOption (boolData x) "v" True})
-                              False
+helpOption :: Option
+helpOption = Option "Help text"
+                    (Flags ["h"] ["help"])
+                    (BoolOpt False)
+                    (OptionEffect (\(opts) _ -> replaceFlag opts "help" (BoolOpt True)))
 
-defaultOptions :: [ProgramOption Bool]
-defaultOptions = [ helpOption
-                 , versionOption
-                 ]
+versionOption :: Option
+versionOption = Option "Version text"
+                       (Flags ["v"] ["version"])
+                       (BoolOpt False)
+                       (OptionEffect (\(opts) _ -> replaceFlag opts "version" (BoolOpt True)))
 
-data ConfigurationData = ConfigurationData {
-  boolData :: [ProgramOption Bool]
-, stringData :: [ProgramOption String]
-, integerData :: [ProgramOption Integer]
-, floatData :: [ProgramOption Float]
-}
+defaultOptions :: Options
+defaultOptions = Options [ helpOption
+                         , versionOption
+                         , targetOption
+                         ]
 
-instance Show (ConfigurationData) where
-  show (ConfigurationData b s i f) =
-    "\nBool:"++(show b)++
-    "\nString:"++(show s)++
-    "\nInt:"++(show i)++
-    "\nFloat"++(show f)
+replaceFlag :: Options -> String -> OptionValue -> Options
+replaceFlag opts str value = addFlag (setValue (getFlag str opts) value) (removeFlag str opts)
 
+appendFlag :: Options -> String -> OptionValue -> Options
+appendFlag opts str value = addFlag (appendValue (getFlag str opts) value) (removeFlag str opts)
+
+setValue :: Option -> OptionValue -> Option
+setValue opt val = opt{value = val}
+
+appendValue :: Option -> OptionValue -> Option
+appendValue opt@(Option _ _ (ListOpt vals) _) (StringOpt val) = opt{value = ListOpt (vals++[val])}
+
+addFlag :: Option -> Options -> Options
+addFlag opt (Options opts) = Options (opt:opts)
+
+removeFlag :: String -> Options -> Options
+removeFlag str (Options opts) = Options (filter (\x -> not (isFlag str x)) opts)
+
+getFlag :: String -> Options -> Option
+getFlag str (Options opts) = head (filter (\x -> (isFlag str x)) opts)
+
+isFlag :: String -> Option -> Bool
+isFlag str option = if elem str (long (flags option))
+  then True
+  else elem str (short (flags option))
+
+setTrue :: Option -> Option
+setTrue option = option{ value = BoolOpt True }
+
+--instance Show (Options) where
+--  show (x:xs) = "O>" ++ (show x) ++ "\n" ++ (show xs)
+--  show [] = "\n"
 
 data ProgramData = ProgramData {
   appName :: String
 , appHelp :: (String,String)
 , appVersion :: String
 , argumentStrings :: [String]
-, configuration :: ConfigurationData
-, parser :: ProgramData -> String -> ProgramData
-, oParser :: ProgramData -> String -> String -> ProgramData
+, configuration :: Options
+, parser :: Options -> String -> Options
 }
 
 instance Show (ProgramData) where
-  show (ProgramData nam _hlp _ver _args cfg _lpars _loparse _spars) =
+  show (ProgramData nam _hlp _ver _args cfg _parse) =
     " :: " ++ nam ++ " :: "++(show cfg)
-
-
 
 parseArguments :: ProgramData -> [String] -> ProgramData
 parseArguments dat [] = dat
+parseArguments dat ("--":rest) = dat -- add rest to targets option
 parseArguments dat (arg:args) = parseArguments (newDat) args
   where newDat = parseArgument dat arg
 
-
 parseArgument :: ProgramData -> String -> ProgramData
-parseArgument dat [] = dat
+--parseArgument dat [] = dat
 parseArgument dat (marker1:marker2:rest) = if marker1 == optionDelimiter
   then if marker2 == optionDelimiter
     then parseLongOption dat rest
     else parseShortOption dat (marker2:rest)
-  else dat  -- {argumentTokens = (argumentTokens dat)++[TargetToken (marker1:marker2:rest)]}
+  else addTarget dat (marker1:marker2:rest)--targets here
 parseArgument dat _ = dat
+
+addTarget :: ProgramData -> String -> ProgramData
+addTarget dat target = dat{configuration = effect cfg target}
+  where cfg = configuration dat
+        (OptionEffect effect) = paramaterEffect (getFlag "" cfg)
 
 --check for --help --version and -- here
 parseLongOption :: ProgramData -> String -> ProgramData
 parseLongOption dat [] = dat
---parseLongOption dat "help" = dat{configuration=((configuration dat){boolData=(boolData (configuration dat))++[]})}
-parseLongOption dat "help" = addOption dat True helpOption
-parseLongOption dat "version" = addOption dat True versionOption
-parseLongOption dat long = configParser long
-  where configParser = (longParser dat) dat
+parseLongOption dat str = dat{configuration = effect cfg str}
+  where cfg = configuration dat
+        (OptionEffect effect) = paramaterEffect (getFlag str cfg)
+
+--parseLongOption dat "help" = dat{configuration = effect cfg ""}
+--  where cfg = configuration dat
+--        (OptionEffect effect) = paramaterEffect helpOption
+--parseLongOption dat "help" = addOption dat True helpOption
+--parseLongOption dat "version" = addOption dat True versionOption
+--parseLongOption dat long = configParser long
+--  where configParser = (longParser dat) dat
 
 
 parseShortOption :: ProgramData -> String -> ProgramData
 parseShortOption dat [] = dat
-parseShortOption dat "h" = addOption dat True helpOption
-parseShortOption dat "v" = addOption dat True versionOption
-parseShortOption dat shorts = configParser shorts
-  where configParser = (shortParser dat) dat
+parseShortOption dat str = dat{configuration = effect cfg str}
+  where cfg = configuration dat
+        (OptionEffect effect) = paramaterEffect (getFlag str cfg)
+--parseShortOption dat "h" = addOption dat True helpOption
+--parseShortOption dat "v" = addOption dat True versionOption
+--parseShortOption dat shorts = configParser shorts
+--  where configParser = (shortParser dat) dat
         
 
 
 
-addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
-addOption dat _x opt = dat{configuration = thisEffect (configuration dat)}
-  where thisEffect = optionEffect opt
+--addOption :: ProgramData -> a -> ProgramOption a -> ProgramData
+--addOption dat _x opt = dat{configuration = thisEffect (configuration dat)}
+--  where thisEffect = optionEffect opt
 
 
-
-
--- old and crusty from here on... to prune out of programs
-
-
-
-data DefaultOptions = DefaultOptions
-  { displayHelp :: Bool
-  , displayVersion :: Bool
-  , targets :: [String]
-  } deriving (Show, Eq)
-
-
-stripQuotes :: String -> String
-stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
-stripQuotes xs = xs
-
-
-flagPrefixes :: [String]
-flagPrefixes = ["-","--","+"]
-flagChars :: [Char]
-flagChars = ['-','+']
-
-defaultFlags :: [OptionFlags DefaultOptions]
-defaultFlags = 
-  [ (OF ""
-        '\0' ""
-        (\x -> x{targets = (targets x)}))
-  , (OF "display this help and exit"
-        '\0' "help"
-        (\x -> x{displayHelp = True}))
-  , (OF "output version information and exit"
-        '\0' "version"
-        (\x -> x{displayVersion = True}))
-  ]
-
-
---allGnuFlags :: [OptionFlags GnuOption]
---allGnuFlags = [ 
---    (OF "" '\0' "" (\x -> case x of
---    GO (Left opts) -> GO (Left opts{targets = (targets opts)})
---  ))
---  , (OF "" '\0' "" (\x -> case x of
---    GO (Right opts) -> GO (Right opts{resolveSymlinks = False})
---  ))
---  ]
-
-
-
-
-data OptionFlags x = OF { description :: String
-                         , shortTag :: Char
-                         , longTag :: String
-                         , effect :: x -> x --options modifier
-                         }
-
-instance Show (OptionFlags x) where
-  show (OF desc '\0' long _effect) = "--"++ long ++"  "++ desc
-  show (OF desc short "" _effect) = "-"++(short:[]) ++"  "++ desc
-  show (OF desc short long _effect) = "-"++(short:[]) ++" --"++ long ++"  "++ desc
-
-
-getShortEffect :: [OptionFlags x] -> Char -> (x -> x)
-getShortEffect flags ch = effect (head (filter (\x -> shortTag x == ch) flags))
-
-getLongEffect :: [OptionFlags x] -> String -> (x -> x)
-getLongEffect flags str = effect (head (filter (\x -> longTag x == str) flags))
-
-processShortOptions :: [OptionFlags x] -> String -> x -> x
-processShortOptions _ [] opts = opts
-processShortOptions flags (x:xs) opts = processShortOptions flags (xs) ((getShortEffect flags x) opts)
-
-processShorts :: [OptionFlags x] -> [String] -> x -> x
-processShorts flags ((chr:rst):others) opts 
-  | chr == '-' = processLong flags (rst:others) opts
-  | otherwise = processArgs flags others (processShortOptions flags (chr:rst) opts)
-processShorts _ _ opts = opts
-
-processLong :: [OptionFlags x] -> [String] -> x -> x
-processLong flags (opt:others) opts = processArgs flags others ((getLongEffect flags opt) opts)
-processLong _ _ opts = opts
-
-
-
-processArgs :: [OptionFlags x] -> [String] -> x -> x
-processArgs _flags [] opts = opts
---processArgs NoOpts remaining opts = opts{targets=(targets opts) ++ remaining}
-processArgs flags ((c:rst):others) opts | c == '-' = processShorts flags (rst:others) opts
-                                        | otherwise = processArgs flags others opts --targets is not visible here!!! {targets = (targets opts)++[(c:rst)]}
-processArgs _ _ opts = opts
 
 
 
