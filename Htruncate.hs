@@ -12,14 +12,14 @@ main = do
   let defaultConfig = ProgramData {
     appName = "Htruncate"
   , appHelp = customHelp
-  , appVersion = "appVersion"
+  , appVersion = customVersion
   , argumentStrings = args
   , configuration = customOptions
   , parser = undefined
   }
   let config = parseArguments defaultConfig args
-  runTermOutput term (termText ("getHelp config"))
-  runTermOutput term (termText ("getVersion config"))
+  runTermOutput term ((showHelp config))
+  runTermOutput term (showVersion config)
   
   --not very conducive to REPL loop refactoring... and do help first
   --interact (showOutput config (getContents input-target)) output-target
@@ -32,7 +32,7 @@ main = do
 
 
 
-createOption :: Option
+createOption, blockOption, referenceOption, sizeOption :: Option
 createOption = Option "do not create any files"
   (Flags ["c"] ["no-create"])
   (BoolOpt False)
@@ -48,17 +48,28 @@ referenceOption = Option "base size on RFILE"
   (StringOpt "")
   (OptionEffect (\(opts) this rest -> let (newRef,newUnused) = parseOptionFileName (this:rest) in (replaceFlag opts "reference" (StringOpt newRef),newUnused)))
 
-sizeOption = Option "set or adjust the file size by SIZE bytes"
-  (Flags ["s"] ["size=SIZE"])
+sizeOption = Option "=SIZE  set or adjust the file size by SIZE bytes"
+  (Flags ["s"] ["size"])
   (GnuSizeOpt (GnuSize NoPrefix (-1) NoUnits))
-  (OptionEffect (\(opts) _ unused -> (replaceFlag opts "no-create" (BoolOpt True), unused)))--TODO -- parseOptionSize
+  (OptionEffect (\(opts) this rest -> let (newSize,newUnused) = parseOptionSize (this:rest) in (replaceFlag opts "s" (GnuSizeOpt newSize), newUnused)))--TODO -- parseOptionSize
 
+customOptions :: Options
 customOptions = catOptions defaultOptions (Options [
     createOption
   , sizeOption
   , referenceOption
   , blockOption
   ])
+
+customVersion :: String
+customVersion = "Htruncate, a Haskell clone of truncate."
+  ++ "truncate (GNU coreutils) 8.23.126-99f76"
+  ++ "Copyright (C) 2015 Free Software Foundation, Inc."
+  ++ "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
+  ++ "This is free software: you are free to change and redistribute it."
+  ++ "There is NO WARRANTY, to the extent permitted by law."
+  ++ "Written by Pádraig Brady."
+  ++ "Ported to Haskell by PuZZleDucK."
 
 customHelp :: (String,String)
 customHelp = ("\nUsage: truncate OPTION... FILE..."
