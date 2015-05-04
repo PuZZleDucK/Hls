@@ -22,6 +22,8 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * touch ==> Htouch (Options and text)
 * shuf ==> Hshuf (Started, argument redo, messy)
 * truncate ==> Htruncate (Options with params trial)
+* sleep ==> sleep (works, but not accurate time)
+* rmdir ==> Hrmdir (your next)
 
 ### ToDo - Interesting: ###
 * users ==> skeleton
@@ -36,7 +38,6 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * dd
 * df
 * chroot
-* sleep
 * date
 
 ### ToDo - Easy: ###
@@ -44,7 +45,7 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * uname / uname-arch / uname-uname
 * tail
 * split
-* rm / rmdir / mv / mkdir / cp / chgrp / chmod / chown
+* rm / mv / mkdir / cp / chgrp / chmod / chown
 * nice
 * du
 * wc (prototype done)
