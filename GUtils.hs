@@ -4,6 +4,13 @@ module GUtils where
 import Data.List
 --import System.Console.Terminfo.Base
 import System.Posix
+import Control.Monad
+import System.Directory
+--import System.FilePath
+--import System.Posix.Files
+--import System.Posix.Types
+
+
 
 optionDelimiter :: Char
 optionDelimiter = '-'
@@ -407,5 +414,32 @@ getFileSize str = do
   return (fromIntegral size)
 
 
+onlyDirs :: [String] -> IO [String]
+onlyDirs fileList = do
+  dirList <- ( filterM (isDir) fileList)
+  return dirList
+
+isDir :: String -> IO Bool
+isDir handle = do
+  stat <- getFileStatus handle
+  --isDirectory handle
+  return (isDirectory stat)
+
+onlyEmptyDirs :: [String] -> IO [String]
+onlyEmptyDirs dirList = do
+  emptyList <- ( filterM (isEmpty) dirList)
+  return emptyList
+
+isEmpty :: String -> IO Bool
+isEmpty handle = do
+  contents <- (getDirectoryContents handle)
+--  putStrLn $ (show handle) ++ " has " ++ (show ((length contents)-2))
+  return ((length contents) <= 2)
+
+deleteFile :: String -> IO ()
+deleteFile file = do
+  putStrLn $ "Removing: " ++ (show file)
+  System.Posix.removeDirectory file
+  return ()
 
 
