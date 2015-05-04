@@ -323,9 +323,10 @@ parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
 
 parseShortOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseShortOption dat [] unused = (dat,unused)
-parseShortOption dat str unused = (dat{configuration = newCfg}, stillUnused)
+parseShortOption dat str unused | length str == 1 = (dat{configuration = newCfg}, stillUnused)
+                                | otherwise = parseShortOption (dat{configuration = newCfg}) (tail str) unused
   where cfg = configuration dat
-        (OptionEffect effect) = paramaterEffect (getFlag (str) cfg)
+        (OptionEffect effect) = paramaterEffect (getFlag ((head str):[]) cfg)
         (newCfg, stillUnused) = (effect cfg (str) unused)
 
 parseOptionFileName :: [String] -> (String,[String])
