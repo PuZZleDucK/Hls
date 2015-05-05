@@ -23,7 +23,8 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * shuf ==> Hshuf (Started, argument redo, messy)
 * truncate ==> Htruncate (Options with params trial)
 * sleep ==> sleep (works, but not accurate time)
-* rmdir ==> Hrmdir (your next)
+* rmdir ==> Hrmdir (basic deleting works, not all flags obeyed)
+* mkdir ==> Hmkdir (starting)
 
 ### ToDo - Interesting: ###
 * users ==> skeleton
@@ -45,7 +46,7 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 * uname / uname-arch / uname-uname
 * tail
 * split
-* rm / mv / mkdir / cp / chgrp / chmod / chown
+* rm / mv / cp / chgrp / chmod / chown
 * nice
 * du
 * wc (prototype done)
