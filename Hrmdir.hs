@@ -2,6 +2,8 @@
 module Main where
 import System.Environment
 import GUtils
+import GFiles
+import GOptions
 
 main :: IO ()
 main = do
@@ -20,15 +22,16 @@ main = do
   putStrLn (showVersion config)
   
   doWork config
-  putStrLn ("\n\n"++(show config)++"\n") --debug opts
+--  putStrLn ("\n\n"++(show config)++"\n") --debug opts
   return ()
 
 
 
 doWork :: ProgramData -> IO ()
 doWork dat = do
---  putStrLn (concat targetList)--dbg
-  sequence_ (map (\x -> putStrLn (show x)) targetList)
+  directoryList <- onlyDirs targetList
+  emptyList <- onlyEmptyDirs directoryList
+  sequence_ (map deleteDir emptyList)
     where cfg = configuration dat
           targets = getFlag "--" cfg
           targetList = getList targets
