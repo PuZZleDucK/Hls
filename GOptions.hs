@@ -211,6 +211,11 @@ getRange opt = case value opt of
   (GnuRangeOpt x) -> x
   _ -> GnuRange 0 0
 
+getTargets :: Options -> [String]
+getTargets opts = case value (getFlag "--" opts) of
+  (ListOpt x) -> x
+  _ -> []
+
 appendValue :: Option -> OptionValue -> Option
 appendValue opt@(Option _ _ _ (ListOpt vals) _) (StringOpt val) = opt{value = ListOpt (vals++[val])}
 appendValue opt _ = opt
