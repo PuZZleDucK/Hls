@@ -10,10 +10,9 @@ data ProgramData = ProgramData {
 , appVersion :: String
 , argumentStrings :: [String]
 , configuration :: Options
-, parser :: Options -> String -> Options
 }
 instance Show (ProgramData) where
-  show (ProgramData nam _hlp _ver _args cfg _parse) =
+  show (ProgramData nam _hlp _ver _args cfg) =
     " :: " ++ nam ++ " :: "++(show cfg)
 
 targetOption :: Option
@@ -41,6 +40,16 @@ defaultOptions = Options [ helpOption
 
 catOptions  :: Options -> Options -> Options
 catOptions (Options opts1) (Options opts2) = Options (opts1++opts2)
+
+
+helpOrVersion :: ProgramData -> Bool
+helpOrVersion dat = case (vFlag, hFlag) of
+  ((BoolOpt doV),(BoolOpt doH)) -> if doV || doH
+                            then True
+                            else False
+  _ -> False
+  where vFlag = value (getFlag "version" (configuration dat))
+        hFlag = value (getFlag "help" (configuration dat))
 
 replaceFlag :: Options -> String -> OptionValue -> Options
 replaceFlag opts str val = addFlag (setValue (getFlag (getFlagOrPrefix str) opts) val) (removeFlag (getFlagOrPrefix str) opts)
