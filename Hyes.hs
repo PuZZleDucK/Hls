@@ -1,82 +1,67 @@
--- Lets try something a little less ambitious, like yes.
+-- Hyes, a haskell implementation of GNU yes.
 module Main where
 import System.Environment
-import System.Console.Terminfo.Base
 import Data.List
+import GUtils
+import GOptions
+import GFiles
 
 main :: IO ()
 main = do
-  term <- setupTermFromEnv
   args <- getArgs
-  let options = processArgs args defaultYes
---  runTermOutput term (termText ("Options: "++(show options)++"\n"))
 
-  runTermOutput term (termText (showHelp options))
-  runTermOutput term (termText (showVersion options))
-  runTermOutput term (termText (showOutput options)) --if not (help or ver)?
+  let defaultConfig = ProgramData {
+    appName = "Hyes"
+  , appHelp = customHelp
+  , appVersion = customVersion
+  , argumentStrings = args
+  , configuration = customOptions
+  }
+  let config = parseArguments defaultConfig args
+  putStr (   showHelp config)
+  putStr (showVersion config)
+  
+  let abort = (helpOrVersion config) || (length (getTargets (configuration config))) == 0
+  if not abort then doWork config
+               else return ()
+--  putStrLn ("\n\n"++(show config)++"\n") --debug opts
   return ()
 
-showOutput :: YesOptions -> String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = (displayString opts)++"\n"++(showOutput opts)
-                | otherwise = ""
-
-showHelp :: YesOptions -> String
-showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
-              | otherwise = ""
-
-showVersion :: YesOptions -> String
-showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
-                 | otherwise = ""
-
-processArgs :: [String] -> YesOptions -> YesOptions
-processArgs [] opts = if (displayString opts) == ""
-  then opts{displayString = "y"}
-  else opts{displayString = stripQuotes (displayString opts)}
-processArgs (x:xs) opts = case x of
-  "--help" -> processArgs xs opts{displayHelp = True}
-  "--version" -> processArgs xs opts{displayVersion = True}
-  _ -> if priorString == ""
-    then processArgs xs opts{displayString = x}
-    else processArgs xs opts{displayString = priorString++" "++x}
-      where priorString = displayString opts
-
-stripQuotes :: String -> String
-stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
-stripQuotes xs = xs
-
-defaultYes :: YesOptions 
-defaultYes = YesOptions "" False False
-
-data YesOptions = YesOptions { displayString :: String
-                             , displayHelp :: Bool
-                             , displayVersion :: Bool } deriving (Show, Eq)
-
-helpText :: [String]
-helpText = [ "Usage: yes [STRING]..."
-           , "or:  yes [OPTION]"
-           , "Repeatedly output a line with all specified STRING(s), or `y'."
-           , "  --help     display this help and exit"
-           , "  --version  output version information and exit"
-           , "Report Hyes bugs to PuZZleDucK+Hyes@gmail.com"
-           , "GNU coreutils home page: <http://www.gnu.org/software/coreutils/>\n\n"
-           ]
-
-versionText :: [String]
-versionText = [ "Hyes (Haskell implementation of GNU yes) 1.0"
-              , "derrived from: yes (GNU coreutils) 8.13"
-              , "Copyright (C) 2011 Free Software Foundation, Inc."
-              , "Written by David MacKenzie."
-              , "Ported by PuZZleDucK.\n\n"
-              ]
 
 
+doWork :: ProgramData -> IO ()
+doWork dat = do
+--  putStrLn (concat targetList)--dbg
+--  sequence_ (map (\x -> putStrLn (show x)) targetList)
+    putStrLn (concat (intersperse " " targetList))
+    doWork dat
+    where cfg = configuration dat
+          targets = getFlag "--" cfg
+          targetList = getList targets
 
+someOption :: Option
+someOption = Option "<Op text>"
+  (Flags ["s"] ["long-flag"])
+  "=<params>"
+  (BoolOpt False)
+  (OptionEffect (\(opts) _ unused -> ((replaceFlag opts "long-flag" (BoolOpt True)), unused)))
 
--- Just performed a quick & dirty comparison running yes and Hyes
--- 1 puzzleduck puzzleduck 225931484 Feb 26 18:35 10comp.txt
--- 1 puzzleduck puzzleduck 368005566 Feb 27 02:37 10fast.txt -- half way already  :D
--- 1 puzzleduck puzzleduck 718757888 Feb 26 18:28 10gnu.txt
--- 1 puzzleduck puzzleduck  16453786 Feb 26 18:28 10.txt
+customOptions :: Options
+customOptions = defaultOptions
+
+customVersion :: String
+customVersion = "Hyes, a Haskell clone of yes."
+  ++ "\nderrived from: yes (GNU coreutils) 8.13"
+  ++ "\nCopyright (C) 2011 Free Software Foundation, Inc."
+  ++ "\nWritten by David MacKenzie and ported to Haskell by PuZZleDucK."
+
+customHelp :: (String,String)
+customHelp = ("Usage: Hyes [STRING]..."
+              ++ "\nor:  Hyes [OPTION]"
+              ++ "\nRepeatedly output a line with all specified STRING(s), or `y'."
+             ,"\nReport Hyes bugs to PuZZleDucK+Hyes@gmail.com"
+              ++ "\nGNU coreutils home page: <http://www.gnu.org/software/coreutils/>\n\n"
+             )
 
 
 

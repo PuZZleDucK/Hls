@@ -2,6 +2,8 @@
 module Main where
 import System.Environment
 import GUtils
+import GOptions
+import GFiles
 
 main :: IO ()
 main = do
@@ -13,13 +15,14 @@ main = do
   , appVersion = customVersion
   , argumentStrings = args
   , configuration = customOptions
-  , parser = undefined -- needed anymore??
   }
   let config = parseArguments defaultConfig args
-  putStrLn (   showHelp config)
-  putStrLn (showVersion config)
+  putStr (   showHelp config)
+  putStr (showVersion config)
   
-  doWork config
+  let abort = (helpOrVersion config) || (length (getTargets (configuration config))) == 0
+  if not abort then doWork config
+               else return ()
   putStrLn ("\n\n"++(show config)++"\n") --debug opts
   return ()
 
