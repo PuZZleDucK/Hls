@@ -98,6 +98,7 @@ parseArguments dat ("--":rest) = addAllTargets dat rest
 parseArguments dat (arg:args) = parseArguments (newDat) unusedArgs
   where (newDat,unusedArgs) = parseArgument dat arg args
 
+-- I'm neglecting to catch when parsing "--notflag" or "-n", should be added as a target if not a legit paramater flag...
 parseArgument :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseArgument dat (marker1:marker2:rest) unused = if marker1 == optionDelimiter
   then if marker2 == optionDelimiter
@@ -118,6 +119,7 @@ addTarget dat target unused  = (dat{configuration = newCfg}, stillUnused)
         (OptionEffect effect) = paramaterEffect (getFlag optionTerminator cfg)
         (newCfg, stillUnused) = (effect cfg target unused)
 
+--if option parsing fails, add "--"++<string> to targets
 parseLongOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseLongOption dat [] unused = (dat,unused)
 parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
@@ -125,6 +127,7 @@ parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
         (OptionEffect effect) = paramaterEffect (getFlag str cfg)
         (newCfg, stillUnused) = (effect cfg (str) unused)
 
+--if option parsing fails, add "-"++<string> to targets
 parseShortOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseShortOption dat [] unused = (dat,unused)
 parseShortOption dat str unused | length str == 1 = (dat{configuration = newCfg}, stillUnused)

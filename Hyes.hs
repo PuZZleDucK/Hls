@@ -21,7 +21,7 @@ main = do
   putStr (   showHelp config)
   putStr (showVersion config)
   
-  let abort = (helpOrVersion config) || (length (getTargets (configuration config))) == 0
+  let abort = (helpOrVersion config)
   if not abort then doWork config
                else return ()
 --  putStrLn ("\n\n"++(show config)++"\n") --debug opts
@@ -33,7 +33,9 @@ doWork :: ProgramData -> IO ()
 doWork dat = do
 --  putStrLn (concat targetList)--dbg
 --  sequence_ (map (\x -> putStrLn (show x)) targetList)
-    putStrLn (concat (intersperse " " targetList))
+    if ((length targetList) == 0)
+      then putStrLn "y"
+      else putStrLn (concat (intersperse " " targetList))
     doWork dat
     where cfg = configuration dat
           targets = getFlag "--" cfg

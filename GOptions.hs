@@ -230,8 +230,12 @@ safeHead :: a -> [a] -> a
 safeHead def [] = def
 safeHead _ (x:_) = x
 
-getFlag :: String -> Options -> Option
-getFlag str (Options opts) = safeHead errorOption (filter (\x -> (isFlag (str) x)) opts)
+getFlag :: String -> Options -> Option -- this 'head' option here should not be safe at all... i was only lying to myself
+--getFlag str (Options opts) = safeHead errorOption (filter (\x -> (isFlag (str) x)) opts)
+getFlag str (Options opts) | length matchOpts == 0 = errorOption
+                           | length matchOpts == 1 = head matchOpts
+                           | otherwise = errorOption
+  where matchOpts = filter (\x -> (isFlag (str) x)) opts
 
 isFlag :: String -> Option -> Bool
 isFlag "" _ = False
@@ -240,7 +244,7 @@ isFlag str option = if elem (getFlagOrPrefix str) (long (flags option))
   else elem (getFlagOrPrefix str) (short (flags option))
 
 getFlagOrPrefix :: String -> String
-getFlagOrPrefix str | elem '=' str = ((takeWhile (          /= '=') str))
+getFlagOrPrefix str | elem '=' str = ((takeWhile (/= '=') str))
                     | otherwise = str
 
 setTrue :: Option -> Option
