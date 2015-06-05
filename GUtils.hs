@@ -125,22 +125,23 @@ parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect flag    -- just add target if fail
         flag = case (getFlag str cfg) of --this is the pattern that fails
-          (Just x) -> x
+          (Just aFlag) -> aFlag
           (Nothing) -> target
             where (Just target) = (getFlag "--" cfg)
         (newCfg, stillUnused) = (effect cfg ("--"++str) unused)
 
 --if option parsing fails, add "-"++<string> to targets
+--still acts flakey on -notflag, but normal yes has bailed by now so behaviour is undefined
 parseShortOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseShortOption dat [] unused = (dat,unused)
 parseShortOption dat str unused | length str == 1 = (dat{configuration = newCfg}, stillUnused)
                                 | otherwise = parseShortOption (dat{configuration = newCfg}) (tail str) unused
   where cfg = configuration dat
         (OptionEffect effect) = paramaterEffect flag
-        (Just flag) = (getFlag ((head str):[]) cfg)
-        (newCfg, stillUnused) = (effect cfg (str) unused)
-
-
-
+        flag = case (getFlag str cfg) of --this is the pattern that fails... fixed-ish
+          (Just aFlag) -> aFlag
+          (Nothing) -> target
+            where (Just target) = (getFlag "--" cfg)
+        (newCfg, stillUnused) = (effect cfg ("-"++str) unused)
 
 
