@@ -15,7 +15,7 @@ main = do
   runTermOutput term (termText (showHelp options))
   runTermOutput term (termText (showVersion options))
   output <- showOutput options
-  runTermOutput term (termText (output))
+--  runTermOutput term (termText (output))
   return ()
 
 showOutput :: CatOptions -> IO String

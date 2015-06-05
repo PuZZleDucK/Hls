@@ -40,6 +40,8 @@ defaultOptions = Options [ helpOption
 
 catOptions  :: Options -> Options -> Options
 catOptions (Options opts1) (Options opts2) = Options (opts1++opts2)
+--  where (Just opts1) = mOpts1
+--        (Just opts2) = mOpts2
 
 
 helpOrVersion :: ProgramData -> Bool
@@ -48,21 +50,25 @@ helpOrVersion dat = case (vFlag, hFlag) of
                             then True
                             else False
   _ -> False
-  where vFlag = value (getFlag "version" (configuration dat))
-        hFlag = value (getFlag "help" (configuration dat))
+  where (Just mvFlag) = (getFlag "version" (configuration dat))
+        vFlag = value mvFlag --add case for maybe option
+        (Just mhFlag) = (getFlag "help" (configuration dat))
+        hFlag = value mhFlag
 
 replaceFlag :: Options -> String -> OptionValue -> Options
-replaceFlag opts str val = addFlag (setValue (getFlag (getFlagOrPrefix str) opts) val) (removeFlag (getFlagOrPrefix str) opts)
+replaceFlag opts str val = addFlag (setValue flag val) (removeFlag (getFlagOrPrefix str) opts)
+  where (Just flag) = (getFlag (getFlagOrPrefix str) opts)
 
 showHelp :: ProgramData -> String
-showHelp dat = case value (getFlag "help" (configuration dat)) of
-  (BoolOpt doHelp) -> if doHelp 
-                         then preText++optionText++"\n"++postText
-                         else ""
-  _ -> ""
-  where preText = fst (appHelp dat)
-        optionText = showConfigHelps (configuration dat)
-        postText = snd (appHelp dat)
+showHelp dat = let (Just flag) = (getFlag "help" (configuration dat)) in
+  case value flag of
+    (BoolOpt doHelp) -> if doHelp
+                           then preText++optionText++"\n"++postText
+                           else ""
+    _ -> ""
+    where preText = fst (appHelp dat)
+          optionText = showConfigHelps (configuration dat)
+          postText = snd (appHelp dat)
 
 showConfigHelps :: Options -> String
 showConfigHelps (Options opts) = concat (map showConfigHelp opts)
@@ -85,12 +91,12 @@ padString str pad count | (length str) >= (fromInteger count) = str
                         | otherwise = padString (str++pad) pad count
 
 showVersion :: ProgramData -> String
-showVersion dat = case value (getFlag "version" (configuration dat)) of
-  (BoolOpt doVersion) -> if doVersion
-                            then appVersion dat
-                            else ""
-  _ -> ""
-
+showVersion dat = let (Just flag) = (getFlag "version" (configuration dat)) in
+  case value flag of
+    (BoolOpt doVersion) -> if doVersion
+                              then appVersion dat
+                              else ""
+    _ -> ""
 
 parseArguments :: ProgramData -> [String] -> ProgramData
 parseArguments dat [] = dat
@@ -116,15 +122,18 @@ addAllTargets dat []  = dat
 addTarget :: ProgramData -> String -> [String] -> (ProgramData,[String])
 addTarget dat target unused  = (dat{configuration = newCfg}, stillUnused)
   where cfg = configuration dat
-        (OptionEffect effect) = paramaterEffect (getFlag optionTerminator cfg)
+        (OptionEffect effect) = paramaterEffect flag
+        (Just flag) = (getFlag optionTerminator cfg)
         (newCfg, stillUnused) = (effect cfg target unused)
 
 --if option parsing fails, add "--"++<string> to targets
+-- currently this just crashes
 parseLongOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseLongOption dat [] unused = (dat,unused)
 parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
   where cfg = configuration dat
-        (OptionEffect effect) = paramaterEffect (getFlag str cfg)
+        (OptionEffect effect) = paramaterEffect flag
+        (Just flag) = (getFlag str cfg)
         (newCfg, stillUnused) = (effect cfg (str) unused)
 
 --if option parsing fails, add "-"++<string> to targets
@@ -133,7 +142,8 @@ parseShortOption dat [] unused = (dat,unused)
 parseShortOption dat str unused | length str == 1 = (dat{configuration = newCfg}, stillUnused)
                                 | otherwise = parseShortOption (dat{configuration = newCfg}) (tail str) unused
   where cfg = configuration dat
-        (OptionEffect effect) = paramaterEffect (getFlag ((head str):[]) cfg)
+        (OptionEffect effect) = paramaterEffect flag
+        (Just flag) = (getFlag ((head str):[]) cfg)
         (newCfg, stillUnused) = (effect cfg (str) unused)
 
 

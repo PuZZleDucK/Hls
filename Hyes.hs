@@ -38,7 +38,7 @@ doWork dat = do
       else putStrLn (concat (intersperse " " targetList))
     doWork dat
     where cfg = configuration dat
-          targets = getFlag "--" cfg
+          (Just targets) = getFlag "--" cfg
           targetList = getList targets
 
 someOption :: Option

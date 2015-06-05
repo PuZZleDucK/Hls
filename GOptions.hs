@@ -177,7 +177,10 @@ timeToFloat (GnuTime unit Days) = unit
 timeToFloat (GnuTime unit NoTimeSuffix) = unit
 
 appendFlag :: Options -> String -> OptionValue -> Options
-appendFlag opts str val = addFlag (appendValue (getFlag (getFlagOrPrefix str) opts) val) (removeFlag (getFlagOrPrefix str) opts)
+appendFlag opts str val = addFlag (appendValue jFlag val) (removeFlag (getFlagOrPrefix str) opts)
+  where jFlag = case (getFlag (getFlagOrPrefix str) opts) of
+                 (Just f) -> f
+                 Nothing -> errorOption
 
 setValue :: Option -> OptionValue -> Option
 setValue opt val = opt{value = val}
@@ -211,10 +214,12 @@ getRange opt = case value opt of
   (GnuRangeOpt x) -> x
   _ -> GnuRange 0 0
 
-getTargets :: Options -> [String]
-getTargets opts = case value (getFlag "--" opts) of
-  (ListOpt x) -> x
-  _ -> []
+getTargets :: Options -> [String] --oh no, what have I done
+getTargets opts = case (getFlag "--" opts) of
+                    (Just x) -> case value x of
+                                 (ListOpt z) -> z
+                                 _ -> []
+                    _ -> []
 
 appendValue :: Option -> OptionValue -> Option
 appendValue opt@(Option _ _ _ (ListOpt vals) _) (StringOpt val) = opt{value = ListOpt (vals++[val])}
@@ -230,11 +235,11 @@ safeHead :: a -> [a] -> a
 safeHead def [] = def
 safeHead _ (x:_) = x
 
-getFlag :: String -> Options -> Option -- this 'head' option here should not be safe at all... i was only lying to myself
+getFlag :: String -> Options -> Maybe Option -- this 'head' option here should not be safe at all... i was only lying to myself
 --getFlag str (Options opts) = safeHead errorOption (filter (\x -> (isFlag (str) x)) opts)
-getFlag str (Options opts) | length matchOpts == 0 = errorOption
-                           | length matchOpts == 1 = head matchOpts
-                           | otherwise = errorOption
+getFlag str (Options opts) | length matchOpts == 0 = Nothing
+                           | length matchOpts == 1 = Just (head matchOpts)
+                           | otherwise = Just errorOption
   where matchOpts = filter (\x -> (isFlag (str) x)) opts
 
 isFlag :: String -> Option -> Bool
