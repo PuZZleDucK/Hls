@@ -38,10 +38,12 @@ main = do
   let inLines = lines input;
   let (Just fg) = fgColor
       red = fg Red
+      pallete = map fg (map ColorNumber [0..8])
   runTermOutput term red
 --  runTermOutput term (termText ("Input: "++(show  input)++"\n"))
 --  sequence (map (\x -> runTermOutput term (termText ("#"++(show x)++"\n"))) inLines)
-  sequence (map (\x -> putTermColor term red ("#"++(show x))) inLines)
+  let cLines = zip (concat (repeat pallete)) inLines
+  sequence (map (\(x, y) -> putTermColor term x ("#"++(show y))) cLines)
 
   let (Just jClearColors) = clearColors
   runTermOutput term jClearColors
