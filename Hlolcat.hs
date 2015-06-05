@@ -38,7 +38,7 @@ main = do
   let inLines = lines input;
   let (Just fg) = fgColor
       red = fg Red
-      pallete = map fg (map ColorNumber [0..8])
+      pallete = map fg (map ColorNumber [0..8]) --realy limited colors :(
   runTermOutput term red
 --  runTermOutput term (termText ("Input: "++(show  input)++"\n"))
 --  sequence (map (\x -> runTermOutput term (termText ("#"++(show x)++"\n"))) inLines)

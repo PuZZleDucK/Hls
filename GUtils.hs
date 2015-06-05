@@ -1,8 +1,6 @@
 -- GUtils, utils for a haskell implementation of GNU core-utils.
-
 module GUtils where
 import GOptions
---import System.Console.Terminfo.Base
 
 data ProgramData = ProgramData {
   appName :: String
@@ -40,20 +38,13 @@ defaultOptions = Options [ helpOption
 
 catOptions  :: Options -> Options -> Options
 catOptions (Options opts1) (Options opts2) = Options (opts1++opts2)
---  where (Just opts1) = mOpts1
---        (Just opts2) = mOpts2
-
 
 helpOrVersion :: ProgramData -> Bool
-helpOrVersion dat = case (vFlag, hFlag) of
-  ((BoolOpt doV),(BoolOpt doH)) -> if doV || doH
-                            then True
-                            else False
+helpOrVersion dat = case (value vFlag, value hFlag) of
+  ((BoolOpt versionBool),(BoolOpt helpBool)) -> versionBool || helpBool
   _ -> False
-  where (Just mvFlag) = (getFlag "version" (configuration dat))
-        vFlag = value mvFlag --add case for maybe option
-        (Just mhFlag) = (getFlag "help" (configuration dat))
-        hFlag = value mhFlag
+  where (Just vFlag) = (getFlag "version" (configuration dat))
+        (Just hFlag) = (getFlag "help" (configuration dat))
 
 replaceFlag :: Options -> String -> OptionValue -> Options
 replaceFlag opts str val = addFlag (setValue flag val) (removeFlag (getFlagOrPrefix str) opts)
@@ -108,7 +99,7 @@ parseArguments dat (arg:args) = parseArguments (newDat) unusedArgs
 parseArgument :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseArgument dat (marker1:marker2:rest) unused = if marker1 == optionDelimiter
   then if marker2 == optionDelimiter
-    then (parseLongOption dat rest unused)
+    then (parseLongOption dat rest unused) --passing off to fail here
     else (parseShortOption dat (marker2:rest) unused)
   else (addTarget dat (marker1:marker2:rest) unused)
 parseArgument dat param unused = (addTarget dat param unused)
@@ -132,9 +123,12 @@ parseLongOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
 parseLongOption dat [] unused = (dat,unused)
 parseLongOption dat str unused = (dat{configuration = newCfg},stillUnused)
   where cfg = configuration dat
-        (OptionEffect effect) = paramaterEffect flag
-        (Just flag) = (getFlag str cfg)
-        (newCfg, stillUnused) = (effect cfg (str) unused)
+        (OptionEffect effect) = paramaterEffect flag    -- just add target if fail
+        flag = case (getFlag str cfg) of --this is the pattern that fails
+          (Just x) -> x
+          (Nothing) -> target
+            where (Just target) = (getFlag "--" cfg)
+        (newCfg, stillUnused) = (effect cfg ("--"++str) unused)
 
 --if option parsing fails, add "-"++<string> to targets
 parseShortOption :: ProgramData -> String -> [String] -> (ProgramData,[String])
