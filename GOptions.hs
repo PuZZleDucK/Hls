@@ -21,7 +21,8 @@ data Option = Option {
 , paramaterEffect :: OptionEffect
 }
 instance Show Option where
-  show (Option _txt (Flags sFlg lFlg) _par val _eff) = (show lFlg)++(show sFlg)++"\t ==>  "++(show val)
+  show (Option _txt (Flags sFlg lFlg) _par val _eff) =
+    (show lFlg)++(show sFlg)++"\t ==>  "++(show val)
 
 data Options = Options [Option]
 instance Show (Options) where
@@ -41,6 +42,123 @@ instance Show (OptionEffect) where
 
 data Flags = Flags { short :: [String], long :: [String] } deriving Show
 
+appendFlag :: Options -> String -> OptionValue -> Options
+appendFlag opts str val = addFlag (appendValue jFlag val) (removeFlag (getFlagOrPrefix str) opts)
+  where jFlag = case (getFlag (getFlagOrPrefix str) opts) of
+                 (Just f) -> f
+                 Nothing -> (Option "<<ERROR>>" (Flags [] []) "" (BoolOpt False) (OptionEffect (\x _ u -> (x,u))))
+
+setValue :: Option -> OptionValue -> Option
+setValue opt val = opt{value = val}
+
+getList :: Option -> [String]
+getList opt = case value opt of
+  (ListOpt x) -> x
+  _ -> []
+getBool :: Option -> Bool
+getBool opt = case value opt of
+  (BoolOpt x) -> x
+  _ -> False
+getString :: Option -> String
+getString opt = case value opt of
+  (StringOpt x) -> x
+  _ -> ""
+getInt :: Option -> Integer
+getInt opt = case value opt of
+  (IntOpt x) -> x
+  _ -> 0
+getFloat :: Option -> Float
+getFloat opt = case value opt of
+  (FloatOpt x) -> x
+  _ -> 0.0
+getSize :: Option -> GnuSize
+getSize opt = case value opt of
+  (GnuSizeOpt x) -> x
+  _ -> GnuSize NoPrefix 0 NoUnits
+getRange :: Option -> GnuRange
+getRange opt = case value opt of
+  (GnuRangeOpt x) -> x
+  _ -> GnuRange 0 0
+
+getTargets :: Options -> [String] --oh no, what have I done
+getTargets opts = case (getFlag "--" opts) of
+                    (Just targets) -> case value targets of
+                                 (ListOpt targetList) -> targetList
+                                 _ -> []
+                    _ -> []
+
+appendValue :: Option -> OptionValue -> Option
+appendValue opt@(Option _ _ _ (ListOpt vals) _) (StringOpt val) = opt{value = ListOpt (vals++[val])}
+appendValue opt _ = opt
+
+addFlag :: Option -> Options -> Options
+addFlag opt (Options opts) = Options (opt:opts)
+
+removeFlag :: String -> Options -> Options
+removeFlag str (Options opts) = Options (filter (\x -> not (isFlag (getFlagOrPrefix str) x)) opts)
+
+getFlag :: String -> Options -> Maybe Option
+getFlag str (Options opts) | length matchOpts == 0 = Nothing
+                           | length matchOpts == 1 = Just (head matchOpts)
+                           | otherwise = Nothing
+  where matchOpts = filter (\x -> (isFlag (str) x)) opts
+
+isFlag :: String -> Option -> Bool
+isFlag "" _ = False
+isFlag str option = if elem (getFlagOrPrefix str) (long (flags option))
+  then True
+  else elem (getFlagOrPrefix str) (short (flags option))
+
+getFlagOrPrefix :: String -> String
+getFlagOrPrefix str | elem '=' str = ((takeWhile (/= '=') str))
+                    | otherwise = str
+
+
+-- FILES -----------------------------------------------------------------
+parseOptionFileName :: [String] -> (String,[String])
+parseOptionFileName (x1:x2:xs) | length x1 == 1 = (x2,xs)--single letter
+  | elem '=' x1 = (drop 1 (dropWhile (/= paramaterDelimiter) x1),(x2:xs)) -- -flag=<value>
+  | otherwise = (x2,xs)--long flag with space
+parseOptionFileName x = ("",x)
+
+-- -- RANGE --------------------------------------------------------------
+data GnuRange = GnuRange { min::Integer, max::Integer } deriving Show
+
+-- -- TIME ---------------------------------------------------------------
+data GnuTime = GnuTime { units::Float, unitType::TimeSuffix }
+instance Show GnuTime where
+  show (GnuTime unit suffix) = (show unit)++(show suffix)
+instance Read GnuTime where
+  readsPrec _ (x) = do (num,xx) <- readsPrec 0 x :: [(Float,String)]
+                       (suff,xxxx) <- readsPrec 0 xx :: [(TimeSuffix,String)]
+                       [((GnuTime num suff),xxxx)]
+data TimeSuffix = Seconds | Minutes | Hours | Days | NoTimeSuffix
+instance Show TimeSuffix where
+  show Seconds = "s"
+  show Hours = "h"
+  show Minutes = "m"
+  show Days = "d"
+  show NoTimeSuffix = ""
+instance Read TimeSuffix where
+  readsPrec _ ('s':xs) = [(Seconds,xs)]
+  readsPrec _ ('h':xs) = [(Hours,xs)]
+  readsPrec _ ('m':xs) = [(Minutes,xs)]
+  readsPrec _ ('d':xs) = [(Days,xs)]
+  readsPrec _ xs = [(NoTimeSuffix,xs)]
+
+secondsInMinutes, secondsInHours, secondsInDays :: Float
+secondsInMinutes = 60
+secondsInHours = 60*secondsInMinutes
+secondsInDays = 24*secondsInHours
+
+timeToFloat :: GnuTime -> Float
+timeToFloat (GnuTime unit Seconds) = unit
+timeToFloat (GnuTime unit Minutes) = unit
+timeToFloat (GnuTime unit Hours) = unit * secondsInHours
+timeToFloat (GnuTime unit Days) = unit
+timeToFloat (GnuTime unit NoTimeSuffix) = unit
+
+-- -- SIZE ---------------------------------------------------------------
 data GnuSize = GnuSize Prefix Integer Units
 data Prefix = NoPrefix | Extend | Reduce | AtMost | AtLeast | RoundDown | RoundUp
 data Units = Kilo UnitType
@@ -139,129 +257,6 @@ calcGnuSize size = case size of
   (GnuSize _ n (Yota Bytes)) -> n*(10^(24::Integer))
   (GnuSize _ n (Yota I024)) -> n*(2^(80::Integer))
 
-
-data GnuRange = GnuRange { min::Integer, max::Integer } deriving Show
-
-data GnuTime = GnuTime { units::Float, unitType::TimeSuffix }
-instance Show GnuTime where
-  show (GnuTime unit suffix) = (show unit)++(show suffix)
-instance Read GnuTime where
-  readsPrec _ (x) = do (num,xx) <- readsPrec 0 x :: [(Float,String)]
-                       (suff,xxxx) <- readsPrec 0 xx :: [(TimeSuffix,String)]
-                       [((GnuTime num suff),xxxx)]
-data TimeSuffix = Seconds | Minutes | Hours | Days | NoTimeSuffix
-instance Show TimeSuffix where
-  show Seconds = "s"
-  show Hours = "h"
-  show Minutes = "m"
-  show Days = "d"
-  show NoTimeSuffix = ""
-instance Read TimeSuffix where
-  readsPrec _ ('s':xs) = [(Seconds,xs)]
-  readsPrec _ ('h':xs) = [(Hours,xs)]
-  readsPrec _ ('m':xs) = [(Minutes,xs)]
-  readsPrec _ ('d':xs) = [(Days,xs)]
-  readsPrec _ xs = [(NoTimeSuffix,xs)]
-
-
-secondsInMinutes, secondsInHours, secondsInDays :: Float
-secondsInMinutes = 60
-secondsInHours = 60*secondsInMinutes
-secondsInDays = 24*secondsInHours
-
-timeToFloat :: GnuTime -> Float
-timeToFloat (GnuTime unit Seconds) = unit
-timeToFloat (GnuTime unit Minutes) = unit
-timeToFloat (GnuTime unit Hours) = unit * secondsInHours
-timeToFloat (GnuTime unit Days) = unit
-timeToFloat (GnuTime unit NoTimeSuffix) = unit
-
-appendFlag :: Options -> String -> OptionValue -> Options
-appendFlag opts str val = addFlag (appendValue jFlag val) (removeFlag (getFlagOrPrefix str) opts)
-  where jFlag = case (getFlag (getFlagOrPrefix str) opts) of
-                 (Just f) -> f
-                 Nothing -> errorOption
-
-setValue :: Option -> OptionValue -> Option
-setValue opt val = opt{value = val}
-
-getList :: Option -> [String]
-getList opt = case value opt of
-  (ListOpt x) -> x
-  _ -> []
-getBool :: Option -> Bool
-getBool opt = case value opt of
-  (BoolOpt x) -> x
-  _ -> False
-getString :: Option -> String
-getString opt = case value opt of
-  (StringOpt x) -> x
-  _ -> ""
-getInt :: Option -> Integer
-getInt opt = case value opt of
-  (IntOpt x) -> x
-  _ -> 0
-getFloat :: Option -> Float
-getFloat opt = case value opt of
-  (FloatOpt x) -> x
-  _ -> 0.0
-getSize :: Option -> GnuSize
-getSize opt = case value opt of
-  (GnuSizeOpt x) -> x
-  _ -> GnuSize NoPrefix 0 NoUnits
-getRange :: Option -> GnuRange
-getRange opt = case value opt of
-  (GnuRangeOpt x) -> x
-  _ -> GnuRange 0 0
-
-getTargets :: Options -> [String] --oh no, what have I done
-getTargets opts = case (getFlag "--" opts) of
-                    (Just x) -> case value x of
-                                 (ListOpt z) -> z
-                                 _ -> []
-                    _ -> []
-
-appendValue :: Option -> OptionValue -> Option
-appendValue opt@(Option _ _ _ (ListOpt vals) _) (StringOpt val) = opt{value = ListOpt (vals++[val])}
-appendValue opt _ = opt
-
-addFlag :: Option -> Options -> Options
-addFlag opt (Options opts) = Options (opt:opts)
-
-removeFlag :: String -> Options -> Options
-removeFlag str (Options opts) = Options (filter (\x -> not (isFlag (getFlagOrPrefix str) x)) opts)
-
-safeHead :: a -> [a] -> a
-safeHead def [] = def
-safeHead _ (x:_) = x
-
-getFlag :: String -> Options -> Maybe Option -- this 'head' option here should not be safe at all... i was only lying to myself
---getFlag str (Options opts) = safeHead errorOption (filter (\x -> (isFlag (str) x)) opts)
-getFlag str (Options opts) | length matchOpts == 0 = Nothing
-                           | length matchOpts == 1 = Just (head matchOpts)
-                           | otherwise = Just errorOption
-  where matchOpts = filter (\x -> (isFlag (str) x)) opts
-
-isFlag :: String -> Option -> Bool
-isFlag "" _ = False
-isFlag str option = if elem (getFlagOrPrefix str) (long (flags option))
-  then True
-  else elem (getFlagOrPrefix str) (short (flags option))
-
-getFlagOrPrefix :: String -> String
-getFlagOrPrefix str | elem '=' str = ((takeWhile (/= '=') str))
-                    | otherwise = str
-
-setTrue :: Option -> Option
-setTrue option = option{ value = BoolOpt True }
-
-
-parseOptionFileName :: [String] -> (String,[String])
-parseOptionFileName (x1:x2:xs) | length x1 == 1 = (x2,xs)--single letter
-  | elem '=' x1 = (drop 1 (dropWhile (/= paramaterDelimiter) x1),(x2:xs)) -- -flag=<value>
-  | otherwise = (x2,xs)--long flag with space
-parseOptionFileName x = ("",x)
-
 parseOptionSize :: [String] -> (GnuSize,[String])
 parseOptionSize (x) = (size,(tail trimmedText))
   where trimmedText = trimLeading x
@@ -273,8 +268,4 @@ trimLeading (x1:xs) | length x1 == 1 = ([head xs]++tail xs)
                     | elem '=' x1 = [drop 1 (dropWhile (/= paramaterDelimiter) x1)]++(xs)
                     | otherwise = xs
 trimLeading [] = []
-
-errorOption :: Option
-errorOption = Option "<<ERROR>>" (Flags [] []) "" (BoolOpt False) (OptionEffect (\x _ u -> (x,u)))
-
 

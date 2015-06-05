@@ -33,7 +33,7 @@ doWork dat = do
 --  putStrLn (concat targetList)--dbg
   sequence_ (map (\x -> putStrLn (show x)) targetList)
     where cfg = configuration dat
-          targets = getFlag "--" cfg
+          (Just targets) = getFlag "--" cfg
           targetList = getList targets
 
 someOption :: Option
