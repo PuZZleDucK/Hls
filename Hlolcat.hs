@@ -44,8 +44,14 @@ main = do
 --  runTermOutput term red
   
 --  let ccode = ("echo -e '\033[0m'") -- \033[36m -- 1b[93;41m --
-  r <- readProcess "echo" ["-e", "'\\033[36m'"] ""
-  runTermOutput term (termText ("color>"++(r)++"<color\n"))
+  cyan <- readProcess "echo" ["-ne", "\\033[36m"] ""
+  cyan1 <- readProcess "echo" ["-ne", "\\033[35m"] ""
+  cyan2 <- readProcess "echo" ["-ne", "\\033[34m"] ""
+  let customPallete = [cyan, cyan1, cyan2]
+      cPalleteStrings = map (\x -> "\\033[38;5;"++(pad 2 '0' x)++"m") [0..99]
+--      cPalleteStrings = map (\x -> "\\033["++(pad 2 '0' x)++"m") [10..20]
+  cPallete <- mapM (\x -> readProcess "echo" ["-ne", x] "") cPalleteStrings
+  runTermOutput term (termText ("color>"++(cyan)++"<color\n"))
   
   
 --  runTermOutput term (termText ("Input: "++(show  input)++"\n"))
@@ -57,12 +63,24 @@ main = do
 --  sequence (map (\(x, y) -> putTermColorChar term x (y:[])) ccLines)
 
   let ccContents = zip (concat (repeat longPallete)) input
-  sequence (map (\(x, y) -> putTermColorChar term x (y:[])) ccContents)
+      ccCustom = zip (concat (repeat customPallete)) input
+      cCustomPallete = zip (concat (repeat cPallete)) input
+--  sequence (map (\(x, y) -> putTermColorChar term x (y:[])) ccContents)
+--  sequence (map (\(x, y) -> putTermColorChar term (termText x) (y:[])) ccCustom)
+
+--  putStrLn ("\n\nCP: "++(show cPalleteStrings))
+  
+  sequence (map (\(x, y) -> putTermColorChar term (termText x) (y:[])) cCustomPallete)
 
   let (Just jClearColors) = clearColors
   runTermOutput term jClearColors
 --  putStrLn ("\n\n"++(show config)++"\n") --debug opts
   return ()
+
+pad :: Int -> Char -> Int -> String
+pad cnt padChar num | length sNum >= cnt = sNum
+                    | otherwise = (take (cnt-(length sNum)) (repeat padChar))++sNum
+  where sNum = show num
 
 
 putTermColor :: Terminal -> TermOutput -> String -> IO ()
