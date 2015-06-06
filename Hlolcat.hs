@@ -9,6 +9,7 @@ import GOptions
 import GFiles
 import Data.Maybe
 import Data.List
+import System.Process
 
 main :: IO ()
 main = do
@@ -39,15 +40,28 @@ main = do
   let (Just fg) = fgColor
       red = fg Red
       pallete = map fg (map ColorNumber [0..8]) --realy limited colors :(
-  runTermOutput term red
+      longPallete = map fg  (map ColorNumber (concat (map ((take 8) . repeat) [0..8]))) --realy limited colors :(
+--  runTermOutput term red
+  
+--  let ccode = ("echo -e '\033[0m'") -- \033[36m -- 1b[93;41m --
+  r <- readProcess "echo" ["-e", "'\\033[36m'"] ""
+  runTermOutput term (termText ("color>"++(r)++"<color\n"))
+  
+  
 --  runTermOutput term (termText ("Input: "++(show  input)++"\n"))
 --  sequence (map (\x -> runTermOutput term (termText ("#"++(show x)++"\n"))) inLines)
-  let cLines = zip (concat (repeat pallete)) inLines
-  sequence (map (\(x, y) -> putTermColor term x ("#"++(show y))) cLines)
+--  let cLines = zip (concat (repeat pallete)) inLines
+--  sequence (map (\(x, y) -> putTermColor term x ("#"++(show y))) cLines)
+  
+--  let ccLines = concat (map (\x -> zip (concat (repeat pallete)) x) inLines)
+--  sequence (map (\(x, y) -> putTermColorChar term x (y:[])) ccLines)
+
+  let ccContents = zip (concat (repeat longPallete)) input
+  sequence (map (\(x, y) -> putTermColorChar term x (y:[])) ccContents)
 
   let (Just jClearColors) = clearColors
   runTermOutput term jClearColors
-  putStrLn ("\n\n"++(show config)++"\n") --debug opts
+--  putStrLn ("\n\n"++(show config)++"\n") --debug opts
   return ()
 
 
@@ -55,6 +69,11 @@ putTermColor :: Terminal -> TermOutput -> String -> IO ()
 putTermColor term color string = do
   runTermOutput term color
   runTermOutput term (termText ("#"++(show string)++"\n"))
+
+putTermColorChar :: Terminal -> TermOutput -> String -> IO ()
+putTermColorChar term color ch = do
+  runTermOutput term color
+  runTermOutput term (termText ((ch)))
 
 someOption :: Option
 someOption = Option "<Op text>"
