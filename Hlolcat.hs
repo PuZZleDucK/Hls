@@ -22,7 +22,6 @@ main = do
   let fgColor = getCapability term (setForegroundColor :: (Capability (Color -> TermOutput)))
   let clearColors = getCapability term (restoreDefaultColors :: (Capability (TermOutput)))
 
---  putStrLn ":::" --debug
   let defaultConfig = ProgramData {
     appName = "Hlolcat"
   , appHelp = customHelp
@@ -34,26 +33,25 @@ main = do
   putStr (   showHelp config)
   putStr (showVersion config)
 
-  input <- getContents -- buffering
+  input <- getContents -- buffering? already done?
   let inLines = lines input;
 
   rPallete <- mapM (\x -> readProcess "echo" ["-ne", x] "") rainbowPalleteStrings
   let longPallete = concat (repeat (rPallete))
 
---  let cCustomPallete = zip (concat (repeat (cPallete))) input
-  let colorCharPairs = (map (zip longPallete) inLines)
---add offset for each line
---  sequence (map (\(x, y) -> putTermColorChar term (termText x) (y:[])) cCustomPallete)
---  sequence (map (\(x, y) -> putTermColorChar term (termText x) (y)) cCustomPallete)
+  let colorCharPairs = zipWithOffset 0 longPallete inLines
 
-  putStrLn "sequence"
   sequence (map (\x -> putColorPairLists term x) colorCharPairs)
-  putStrLn "post"
 
 --would be nice to put this in after ^c / abort too.
   let (Just jClearColors) = clearColors
   runTermOutput term jClearColors
   return ()
+
+
+zipWithOffset :: Int -> [String] -> [String] -> [[(String,Char)]]
+zipWithOffset offset pallete (x:xs) = ((zip (drop offset pallete)) x):(zipWithOffset (offset+1) pallete xs)
+--would be nice to wrap screen at terminal width too
 
 putColorPairLists :: Terminal -> [(String,Char)] -> IO ()
 putColorPairLists term lists = do

@@ -3,9 +3,12 @@
 
 This has turned into a vain attempt to recreate the GNU coreutils programs in Haskell, for no particular reason... Maybe someday some student called Hlinus will write a kernel and this will then come in handy.
 
+### Now with bonus: Hlolcat ###
+
 ## Progress so far: ##
 
-### Done(ish): ###
+### Done: ###
+* lolcat ==> Hlolcat (fully functional)
 * yes ==> Hyes (works, updated)
 * whoami ==> Hwhoami (done, update needed)
 * basename ==> Hbasename (done, update needed)
