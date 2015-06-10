@@ -10,6 +10,7 @@ import GFiles
 import Data.Maybe
 import Data.List
 import System.Process
+import Control.Exception as E
 
 main :: IO ()
 main = do
@@ -34,22 +35,34 @@ main = do
   putStr (showVersion config)
 
   input <- getContents -- buffering? already done?
-  let inLines = lines input;
+--hSetBuffering stdout NoBuffering
+--hSetBuffering stdin NoBuffering
+  let inLines = lines input; -- also do output text?
 
   rPallete <- mapM (\x -> readProcess "echo" ["-ne", x] "") rainbowPalleteStrings
   let longPallete = concat (repeat (rPallete))
 
   let colorCharPairs = zipWithOffset 0 longPallete inLines
-
-  sequence (map (\x -> putColorPairLists term x) colorCharPairs)
-
---would be nice to put this in after ^c / abort too.
   let (Just jClearColors) = clearColors
-  runTermOutput term jClearColors
+
+--  E.handleJust f return m 
+-- main > fst > snd
+--let x = E.bracket (putStrLn "main") (\x -> putStrLn "fst") (\x -> sequence (map (\x -> putColorPairLists term x) colorCharPairs))
+
+  E.onException
+    (sequence (map (\x -> putColorPairLists term x) colorCharPairs))
+    (runTermOutput term jClearColors)
+
+--  sequence (map (\x -> putColorPairLists term x) colorCharPairs)
+--would be nice to put this in after ^c / abort too.
+--  runTermOutput term jClearColors
+
+  (runTermOutput term jClearColors)
   return ()
 
 
 zipWithOffset :: Int -> [String] -> [String] -> [[(String,Char)]]
+zipWithOffset offset pallete [] = []  --[[("",'\n')]]
 zipWithOffset offset pallete (x:xs) = ((zip (drop offset pallete)) x):(zipWithOffset (offset+1) pallete xs)
 --would be nice to wrap screen at terminal width too
 
