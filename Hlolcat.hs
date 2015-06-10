@@ -19,8 +19,8 @@ main = do
   let height = fromMaybe 0 (getCapability term termLines)
       width = fromMaybe 0 (getCapability term termColumns)
 
-  let up = getCapability term (moveUp :: (Capability (Int -> TermOutput)))
-  let fgColor = getCapability term (setForegroundColor :: (Capability (Color -> TermOutput)))
+--  let up = getCapability term (moveUp :: (Capability (Int -> TermOutput)))
+--  let fgColor = getCapability term (setForegroundColor :: (Capability (Color -> TermOutput)))
   let clearColors = getCapability term (restoreDefaultColors :: (Capability (TermOutput)))
 
   let defaultConfig = ProgramData {
@@ -35,8 +35,6 @@ main = do
   putStr (showVersion config)
 
   input <- getContents -- buffering? already done?
---hSetBuffering stdout NoBuffering
---hSetBuffering stdin NoBuffering
   let inLines = lines input; -- also do output text?
 
   rPallete <- mapM (\x -> readProcess "echo" ["-ne", x] "") rainbowPalleteStrings
@@ -45,19 +43,10 @@ main = do
   let colorCharPairs = zipWithOffset 0 longPallete inLines
   let (Just jClearColors) = clearColors
 
---  E.handleJust f return m 
--- main > fst > snd
---let x = E.bracket (putStrLn "main") (\x -> putStrLn "fst") (\x -> sequence (map (\x -> putColorPairLists term x) colorCharPairs))
-
   E.onException
-    (sequence (map (\x -> putColorPairLists term x) colorCharPairs))
-    (runTermOutput term jClearColors)
-
---  sequence (map (\x -> putColorPairLists term x) colorCharPairs)
---would be nice to put this in after ^c / abort too.
---  runTermOutput term jClearColors
-
-  (runTermOutput term jClearColors)
+    (sequence (map (\x -> putColorPairLists x) colorCharPairs))
+    (runTermOutput term jClearColors) --catch ctrl-c
+  (runTermOutput term jClearColors) --normal exit
   return ()
 
 
@@ -66,32 +55,21 @@ zipWithOffset offset pallete [] = []  --[[("",'\n')]]
 zipWithOffset offset pallete (x:xs) = ((zip (drop offset pallete)) x):(zipWithOffset (offset+1) pallete xs)
 --would be nice to wrap screen at terminal width too
 
-putColorPairLists :: Terminal -> [(String,Char)] -> IO ()
-putColorPairLists term lists = do
-  sequence (map (putColorPair term) lists)
+putColorPairLists :: [(String,Char)] -> IO ()
+putColorPairLists lists = do
+  sequence (map (putColorPair) lists)
   putStrLn ""
   return ()
 
-
-putColorPair :: Terminal -> (String, Char) -> IO ()
-putColorPair term (color, ch) = do
-  runTermOutput term (termText color)
+putColorPair :: (String, Char) -> IO ()
+putColorPair (color, ch) = do
+  putStr color
   if (ch == '\n') then putStrLn ""
-        else runTermOutput term (termText ((ch:[])))
-  --need flush
+        else putStr (ch:[])
 
-
-
-reds = [89,125,124,1,160,196,9,197]
-oranges = [203,209,3,136,136,166,202,208]
-yellows = [178,214,220,220,11,226,227]
-green = [148,46,118,76,2,22,71,113]
-cyans = [30,38,14,50,87,123,81,62]
-blues = [4,24,27,32,21,20,17,56]
-purples = [53,55,91,128,126,164,200,201]
-
-rainbowPallete = concat (map (\x -> makeCopiesList x 7) [reds, oranges, yellows, green, cyans, blues, purples])
+rainbowPallete = concat (map (\x -> makeCopiesList x 3) [reds, oranges, yellows, green, cyans, blues, purples])
 rainbowPalleteStrings = map (\x -> "\\033[38;5;"++(pad 2 '0' x)++"m") (rainbowPallete)
+
 makeCopies :: Int -> Int -> [Int]
 makeCopies item n = ((take n (repeat item)))
 
@@ -104,16 +82,14 @@ pad cnt padChar num | length sNum >= cnt = sNum
                     | otherwise = (take (cnt-(length sNum)) (repeat padChar))++sNum
   where sNum = show num
 
+reds = [89,125,124,1,160,196,9,197]
+oranges = [203,209,3,136,136,166,202,208]
+yellows = [178,214,220,220,11,226,227]
+green = [148,46,118,76,2,22,71,113]
+cyans = [30,38,14,50,87,123,81,62]
+blues = [4,24,27,32,21,20,17,56]
+purples = [53,55,91,128,126,164,200,201]
 
-putTermColor :: Terminal -> TermOutput -> String -> IO ()
-putTermColor term color string = do
-  runTermOutput term color
-  runTermOutput term (termText ("#"++(show string)++"\n"))
-
-putTermColorChar :: Terminal -> TermOutput -> String -> IO ()
-putTermColorChar term color ch = do
-  runTermOutput term color
-  runTermOutput term (termText ((ch)))
 
 someOption :: Option
 someOption = Option "<Op text>"
