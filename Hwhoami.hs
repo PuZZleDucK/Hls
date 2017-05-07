@@ -4,6 +4,7 @@ module Main where
 import System.Environment
 
 import Data.List
+
 {-
 possible source 
 https://downloads.haskell.org/~ghc/8.0.1/docs/html/libraries/terminfo-0.4.0.2/System-Console-Terminfo-Keys.html
