@@ -5,6 +5,12 @@ This has turned into a vain attempt to recreate the GNU coreutils programs in Ha
 
 ### Now with bonus: Hlolcat ###
 
+## Continuious Integration
+
+[![Build Status](https://semaphoreci.com/api/v1/puzzleduck/hls/branches/master/badge.svg)](https://semaphoreci.com/puzzleduck/hls)
+
+App is hosted on semaphore which sets up Haskell and attempts to run demo program.
+
 ## Progress so far: ##
 
 ### Done: ###
