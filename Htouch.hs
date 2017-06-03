@@ -95,7 +95,7 @@ touchFlags =
         (\x -> x{targetDereference = True}))
   , (CF "-                     change only the modification time"
         'm' "" 0
-        (\x -> x{targetTypes = (targetTypes x)++[ModificationTime]}))
+        (\x -> x{targetTypes = targetTypes x++[ModificationTime]}))
   , (CF "-, --=FILE   use this file's times instead of current time"
         'r' "reference" 0
         (\x -> x{targetTimeFile = ""}))

@@ -15,20 +15,20 @@ main = do
   runTermOutput term (termText (showVersion options))
   --needs to possibly process a file instead of querying system.
   output <- showOutput options
-  runTermOutput term (termText (output))
+  runTermOutput term (termText output)
   return ()
 
 showOutput :: UsersOptions -> IO String
-showOutput opts | not ((displayHelp opts) || (displayVersion opts)) = return "" -- <do-stuff-Here>
+showOutput opts | not (displayHelp opts) || (displayVersion opts) = return "" -- <do-stuff-Here>
                 | otherwise = return ""
 
 
 showHelp :: UsersOptions -> String
-showHelp opts | (displayHelp opts) = concat (intersperse "\n" helpText)
+showHelp opts | displayHelp opts =   intercalate "\n" helpText
               | otherwise = ""
 
 showVersion :: UsersOptions -> String
-showVersion opts | (displayVersion opts) = concat (intersperse "\n" versionText)
+showVersion opts | displayVersion opts =   intercalate "\n" versionText
                  | otherwise = ""
 
 processArgs :: [String] -> UsersOptions -> UsersOptions
@@ -39,7 +39,7 @@ processArgs (x:xs) opts = case x of
   _ -> processArgs xs opts
 
 stripQuotes :: String -> String
-stripQuotes ('"':xs) = if last xs == '"' then init xs else ('"':xs)
+stripQuotes ('"':xs) = if last xs == '"' then init xs else '"' : xs
 stripQuotes xs = xs
 
 defaultUsers :: UsersOptions
