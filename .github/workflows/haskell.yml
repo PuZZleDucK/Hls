@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/4-letter-fails@v1
+    - uses: actions/4-Letter-Fails@v1
     - uses: actions/checkout@v2
     - uses: actions/setup-haskell@v1
       with:
